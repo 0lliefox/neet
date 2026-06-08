@@ -1,0 +1,206 @@
+# NEET Dataset Pipeline Configuration
+# Run: python -m scraper.runner
+# Override any value with CLI flags: --output, --max-per-source, --sources
+
+pipeline:
+  # Sources to run when --sources all is specified.
+  # "news" is excluded by default (roadworks uses it as a fallback internally).
+  # Add "news" explicitly if you want standalone council-news items.
+  default_sources:
+    - nexus
+    - flood
+    - metoffice
+    - roadworks
+    - traffic
+#    - tyne_tunnels
+#    - air_quality
+#    - bus
+#    - bridges
+    - police
+
+  # Maximum evidence items to collect per individual source
+  max_items_per_source: 10
+
+  # Output CSV path (can be overridden with --output)
+  output: data/dataset.csv
+
+domains:
+  # Target number of evidence snippets per domain (used for reporting)
+  targets:
+    roadworks: 10
+    weather: 10
+    transport: 10
+    crime: 10
+
+claims:
+  # Labels written to the 'label' column for the three pre-populated claim rows.
+  # Each evidence snippet gets one row per label, with claim_text left blank.
+  labels:
+    - Supported
+    - Refuted
+    - Not Enough Evidence
+
+  # Valid values for the claim_type column (filled in manually)
+  types:
+    - paraphrase
+    - negation
+    - time change
+    - location change
+    - cause change
+    - unsupported extra detail
+    - partial support
+
+sources:
+  nexus:
+    url: https://www.nexus.org.uk/metro/updates
+    max_items: 10
+
+  flood:
+    url: https://environment.data.gov.uk/flood-monitoring/id/floods
+    # Counties to query (queried in order until max_items is reached)
+    areas:
+      - Northumberland
+      - Tyne and Wear
+    max_items: 10
+    timeout_seconds: 15
+
+  metoffice:
+    forecast_url: https://weather.metoffice.gov.uk/forecast/gcybg0rne
+    # DataPoint API location ID for Newcastle upon Tyne
+    datapoint_location_id: "352409"
+    latitude: 54.9781
+    longitude: -1.6162
+    max_items: 10
+    # API key loaded from METOFFICE_API_KEY env var / .env file
+
+  roadworks:
+    map_url: https://community.newcastle.gov.uk/apps/showroadworks
+    one_network:
+      tile_base_url: https://eu2-prd-pg-ts1.one.network/tileserv.maplayer_roadworks/{z}/{x}/{y}.pbf
+      tile_zoom: 10
+      # Tile (x, y) pairs at zoom 10 covering Newcastle/Gateshead
+      tiles:
+        - [507, 323]
+        - [507, 324]
+        - [506, 323]
+        - [506, 324]
+        - [508, 323]
+        - [508, 324]
+      organisation_id: "1185"
+      site_code: D120RY7Z47
+      extended_function_id: "14"
+      timezone: Europe/London
+      # Date range: how far back (days) and forward (days) from today to fetch works
+      date_range_days_past: 1
+      date_range_days_future: 90
+    max_items: 10
+
+  traffic:
+    url: https://www.trafficengland.com/traffic-alerts
+    datex_url: https://hatrafficinfo.dft.gov.uk/feeds/datex2/England/CurrentRoadworks/content.xml
+    # Place names required to include an alert. Road numbers alone are NOT sufficient
+    # because roads like A19 span multiple regions (Teesside, Tyne and Wear, etc.).
+    # An alert must contain at least one of these place names to be included.
+    ne_filter_patterns:
+      - Newcastle
+      - Gateshead
+      - Sunderland
+      - North Tyneside
+      - South Tyneside
+      - Tyne
+      - Wear
+      - Tyne Tunnel
+      - Tyne Bridge
+      - Redheugh
+      - Blaydon
+      - Birtley
+      - Morpeth
+      - Hexham
+      - Cramlington
+      - Washington
+      - Gosforth
+      - Jesmond
+      - Byker
+      - Wallsend
+      - Jarrow
+      - South Shields
+      - North Shields
+      - Whitley Bay
+      - Tynemouth
+      - Ponteland
+      - Killingworth
+      - Benton
+      - Dunston
+      - Felling
+      - Low Fell
+    # Road identifiers used only for location label extraction (not for filtering).
+    # Listed here for reference; handled internally by the scraper.
+    # ne_road_patterns: [A1M, A19, A69, A167, A1058, A184, A194, A693, A696, A697]
+    max_items: 10
+
+  tyne_tunnels:
+    url: https://www.thetynentunnels.co.uk/
+    datex_fallback_url: https://hatrafficinfo.dft.gov.uk/feeds/datex2/England/CurrentRoadworks/content.xml
+    max_items: 5
+
+  air_quality:
+    # KCL ERG API — no key required
+    hourly_url: https://api.erg.ic.ac.uk/AirQuality/Hourly/MonitoringIndex/GroupName=Newcastle/Json=true
+    daily_fallback_url: https://api.erg.ic.ac.uk/AirQuality/Daily/MonitoringIndex/GroupName=Newcastle/Json=true
+    # Monitoring stations of interest (informational — scraper uses all stations in the group)
+    stations:
+      - Newcastle Centre
+      - Newcastle Cradlewell Roadside
+      - Gosforth High Street
+    max_items: 10
+
+  bus:
+    primary_url: https://www.gonortheast.co.uk/service-updates/
+    fallback_url: https://www.arrivabus.co.uk/north-east/service-updates
+    max_items: 10
+
+  bridges:
+    ncc_news_url: https://www.newcastle.gov.uk/news
+    gateshead_news_url: https://www.gateshead.gov.uk/news
+    datex_fallback_url: https://hatrafficinfo.dft.gov.uk/feeds/datex2/England/CurrentRoadworks/content.xml
+    # Bridges monitored
+    bridges:
+      - Tyne Bridge
+      - Gateshead Millennium Bridge
+      - Swing Bridge
+    max_items: 5
+
+  police:
+    # Police.uk open data API — no key required
+    api_base: https://data.police.uk/api
+    # Newcastle city centre coordinates
+    latitude: 54.9781
+    longitude: -1.6162
+    # Optional: restrict to a specific month (YYYY-MM). Omit for most recent available.
+    # date: "2026-03"
+    max_items: 10
+
+  council_news:
+    url: https://www.newcastle.gov.uk/news
+    # Keywords used to filter articles to the roadworks domain
+    roadworks_keywords:
+      - roadworks
+      - closure
+      - bridge
+      - resurfacing
+      - traffic
+      - road
+      - works
+      - diversion
+      - lane
+      - tyne bridge
+      - street
+      - pavement
+      - construction
+      - maintenance
+      - repair
+      - highway
+      - footpath
+      - path
+      - building work
+    max_items: 10
