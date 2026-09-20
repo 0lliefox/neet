@@ -17,15 +17,18 @@ class StreetManagerArchiveSource(CaptureSource):
     def fetch(self, ctx: Context) -> list[Payload]:
         done: list[str] = ctx.state.get("keys_done", [])
         out = []
+        from datetime import datetime, timezone
+        year_now = datetime.now(timezone.utc).year
+        min_year = int(self.cfg.get("min_key_year", 2026))
         for kind in self.cfg.get("kinds", ["permit", "activity", "section_58"]):
-            r = self.get(ctx, BASE, params={"list-type": "2", "delimiter": "/", "prefix": f"{kind}/"}, timeout=60)
-            if not r.ok:
-                continue
-            keys = re.findall(r"<Key>([^<]+\.zip)</Key>", r.text)
-            for key in keys:
+            keys: list[str] = []
+            for year in range(min_year, year_now + 1):
+                # with delimiter=/ the bucket returns year prefixes only, so list each year prefix explicitly
+                r = self.get(ctx, BASE, params={"list-type": "2", "prefix": f"{kind}/{year}/"}, timeout=60)
+                if r.ok:
+                    keys += re.findall(r"<Key>([^<]+\.zip)</Key>", r.text)
+            for key in sorted(keys):
                 if key in done:
-                    continue
-                if key < self.cfg.get("min_key", f"{kind}/2026/01.zip"):
                     continue
                 rr = self.get(ctx, BASE + key, timeout=1800)
                 if rr.ok and rr.content:

@@ -26,7 +26,7 @@ class PoliceMonthlySource(CaptureSource):
                     continue
                 n = len(r.json()) if r.ok else None
                 out.append(self.payload_from_response(f"{point['name']}_{m}", r, ext="json", n_items=n))
-                if r.ok:
-                    done.append(m)
+                if r.ok and n:
+                    done.append(m)  # an empty list means the month is not published yet: retry tomorrow
         ctx.state.set("months_done", sorted(set(done))[-24:])
         return out
