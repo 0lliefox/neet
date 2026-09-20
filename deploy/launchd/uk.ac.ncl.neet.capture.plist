@@ -5,10 +5,10 @@
   <key>Label</key><string>uk.ac.ncl.neet.capture</string>
   <key>ProgramArguments</key>
   <array>
-    <string>__HOME__/Documents/neet/.venv/bin/neet</string>
+    <string>__HOME__/neet/.venv/bin/neet</string>
     <string>capture</string>
   </array>
-  <key>WorkingDirectory</key><string>__HOME__/Documents/neet</string>
+  <key>WorkingDirectory</key><string>__HOME__/neet</string>
   <key>StartInterval</key><integer>600</integer>
   <key>RunAtLoad</key><true/>
   <key>StandardOutPath</key><string>__HOME__/Library/Logs/neet-capture.out.log</string>
