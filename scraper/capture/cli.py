@@ -37,7 +37,6 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--status", action="store_true")
     ap.add_argument("--data-root", default=None)
-    ap.add_argument("--lock-timeout", type=int, default=0, help="seconds to wait for a running instance (0 = skip if locked)")
     args = ap.parse_args(argv)
 
     try:
@@ -58,63 +57,60 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{src:24s} {rec.get('at','')}  ok={rec.get('ok')}  n={rec.get('n_items')}  {rec.get('error','') or ''}")
         return 0
 
-    lock = store.root / "state" / ".capture.lock"
-    waited = 0
-    while lock.exists():
-        age = time.time() - lock.stat().st_mtime
-        if age > 3600:  # stale lock
+    env = env_snapshot()
+    session = requests.Session()
+    n_ok = n_err = 0
+    for src in all_sources(cfg):
+        if args.sources and src.name not in args.sources:
+            continue
+        state = State(store.state_dir, src.name)
+        if not args.force and not args.sources and not state.due(src.cadence_s):
+            continue
+        missing = src.missing_env(env)
+        if missing:
+            store.health({"source": src.name, "ok": False, "skipped": "missing_env", "missing": missing})
+            continue
+        # per-source lock: a long download (e.g. Street Manager archives) must not block the other sources
+        lock = store.state_dir / f".lock_{src.name}"
+        if lock.exists():
+            age = time.time() - lock.stat().st_mtime
+            if age < max(6 * 3600, 3 * src.cadence_s):
+                logger.info("%s: previous run still active (lock age %.0fs); skipping", src.name, age)
+                continue
+            lock.unlink(missing_ok=True)  # stale
+        lock.write_text(str(os.getpid()))
+        t0 = time.time()
+        ctx = Context(store=store, state=state, config=src.cfg, env=env, session=session)
+        try:
+            payloads = src.fetch(ctx)
+            n_items = 0
+            statuses = []
+            n_written = n_unchanged = 0
+            for p in payloads:
+                if p is None:
+                    continue
+                if store.write(src.name, p) is None:
+                    n_unchanged += 1
+                else:
+                    n_written += 1
+                n_items += p.n_items or 0
+                statuses.append(p.meta.get("status"))
+            ok = all((s is None) or (200 <= int(s) < 300) for s in statuses) if statuses else True
+            state.mark_run(ok=ok); state.save()
+            store.health({"source": src.name, "ok": ok, "n_payloads": len(payloads), "n_written": n_written,
+                          "n_unchanged": n_unchanged, "n_items": n_items,
+                          "duration_s": round(time.time() - t0, 1), "statuses": statuses[:20]})
+            n_ok += 1
+        except Exception as exc:
+            logger.exception("source %s failed", src.name)
+            state.mark_run(ok=False); state.save()
+            store.health({"source": src.name, "ok": False, "error": f"{type(exc).__name__}: {exc}"[:300],
+                          "duration_s": round(time.time() - t0, 1)})
+            n_err += 1
+        finally:
             lock.unlink(missing_ok=True)
-            break
-        if waited >= args.lock_timeout:
-            logger.info("another capture run is active (lock age %.0fs); exiting", age)
-            return 0
-        time.sleep(5); waited += 5
-    lock.write_text(str(os.getpid()))
-    try:
-        env = env_snapshot()
-        session = requests.Session()
-        n_ok = n_err = 0
-        for src in all_sources(cfg):
-            if args.sources and src.name not in args.sources:
-                continue
-            state = State(store.state_dir, src.name)
-            if not args.force and not args.sources and not state.due(src.cadence_s):
-                continue
-            missing = src.missing_env(env)
-            if missing:
-                store.health({"source": src.name, "ok": False, "skipped": "missing_env", "missing": missing})
-                continue
-            t0 = time.time()
-            ctx = Context(store=store, state=state, config=src.cfg, env=env, session=session)
-            try:
-                payloads = src.fetch(ctx)
-                n_items = 0
-                statuses = []
-                n_written = n_unchanged = 0
-                for p in payloads:
-                    if p is None:
-                        continue
-                    if store.write(src.name, p) is None:
-                        n_unchanged += 1
-                    else:
-                        n_written += 1
-                    n_items += p.n_items or 0
-                    statuses.append(p.meta.get("status"))
-                ok = all((s is None) or (200 <= int(s) < 300) for s in statuses) if statuses else True
-                state.mark_run(ok=ok); state.save()
-                store.health({"source": src.name, "ok": ok, "n_payloads": len(payloads), "n_written": n_written,
-                              "n_unchanged": n_unchanged, "n_items": n_items,
-                              "duration_s": round(time.time() - t0, 1), "statuses": statuses[:20]})
-                n_ok += 1
-            except Exception as exc:
-                logger.exception("source %s failed", src.name)
-                state.mark_run(ok=False); state.save()
-                store.health({"source": src.name, "ok": False, "error": f"{type(exc).__name__}: {exc}"[:300],
-                              "duration_s": round(time.time() - t0, 1)})
-                n_err += 1
+    if True:
         logger.info("capture run done: %d ok, %d failed", n_ok, n_err)
-    finally:
-        lock.unlink(missing_ok=True)
     return 0
 
 
