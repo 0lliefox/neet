@@ -56,3 +56,25 @@ def test_generic_names_are_not_strong_cues_or_queries():
         assert not m.analyse({"record": {"text": txt}})["place_ok"], txt
     assert all(place not in set(lex["places"]["tier3_generic_needs_cue"]) for place, _ in build_s1_queries(lex))
     assert m.analyse({"record": {"text": "Haymarket Metro closed, no trains"}})["place_ok"]
+
+
+def test_bluesky_run_dedups_by_uri(tmp_path):
+    from scraper.capture.sources.bluesky import BlueskySource
+    from scraper.capture.store import Store
+    from scraper.capture.state import State
+    from scraper.capture.base import Context
+    import requests, json
+    src = BlueskySource({})
+    st = Store(tmp_path)
+    ctx = Context(store=st, state=State(st.state_dir, "bluesky"), config={}, env={"PSEUDONYM_SALT": "s"}, session=requests.Session())
+    src._run_seen, src._pending = {}, []
+    post = {"uri": "at://x/1", "author": {"did": "did:plc:a"}, "record": {"text": "Coast Road flooded near Wallsend"}}
+    p1, s1 = src._emit(ctx, "S1-KW_Wallsend", "S1-KW", [post], set(), extra={"q": "Wallsend"}, require_place=True)
+    p2, s2 = src._emit(ctx, "S1-KW_Coast Road", "S1-KW", [post], set(), extra={"q": "Coast Road"}, require_place=True)
+    p3, s3 = src._emit(ctx, "S5-HASH_Newcastle", "S5-HASH", [post], set(), extra={"tag": "Newcastle"})
+    assert s1["kept"] == 1 and s2["kept"] == 0 and s2["dupes"] == 1 and s3["dupes"] == 1
+    for pl, doc in src._pending:
+        pl.body = json.dumps(doc).encode()
+    d1 = json.loads(p1.body)
+    assert d1["posts"][0]["strategies"] == ["S1-KW", "S5-HASH"] and len(d1["posts"][0]["matched_by"]) == 3
+    assert json.loads(p2.body)["dupes"] == ["at://x/1"]

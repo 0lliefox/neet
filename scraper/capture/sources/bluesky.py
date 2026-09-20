@@ -157,6 +157,7 @@ class BlueskySource(CaptureSource):
         super().__init__(cfg)
         self.lex = load_lexicon(Path(self.cfg["lexicon"]) if self.cfg.get("lexicon") else None)
         self.matcher = Matcher(self.lex)
+        self._run_seen: dict[str, dict] = {}
 
     # -- helpers ---------------------------------------------------------------
     def _pid(self, ctx: Context, did: str) -> str:
@@ -168,9 +169,13 @@ class BlueskySource(CaptureSource):
 
     def _emit(self, ctx: Context, tag: str, strategy: str, posts: list[dict], local_dids: set[str], extra: dict | None = None,
               require_place: bool = False, keep_all: bool = False) -> tuple[Payload | None, dict]:
-        kept, seen = [], 0
+        """Filter posts and build one payload. Posts already kept earlier in this run (same URI) are not stored
+        again: their existing record gains this strategy/query in `strategies`/`matched_by` and the payload only
+        lists their URIs under `dupes` (so per-strategy recall can still be computed from the payloads)."""
+        kept, seen, dupes = [], 0, []
         for p in posts:
             seen += 1
+            uri = p.get("uri")
             a = self.matcher.analyse(p)
             did = (p.get("author") or {}).get("did", "")
             local = did in local_dids
@@ -178,18 +183,32 @@ class BlueskySource(CaptureSource):
                 continue
             if not keep_all and not self._keep(a, local):
                 continue
-            kept.append({"post": p, "analysis": a, "author_pid": self._pid(ctx, did) if did else None,
-                         "author_local": local, "strategies": [strategy], "captured_at": utcnow().isoformat()})
-        stats = {"seen": seen, "kept": len(kept)}
-        if not kept:
+            match = {"strategy": strategy, "tag": tag, **{k: v for k, v in (extra or {}).items() if k in ("q", "tag", "feed", "actor", "mentions", "actor_pid")}}
+            if uri and uri in self._run_seen:
+                rec = self._run_seen[uri]
+                if strategy not in rec["strategies"]:
+                    rec["strategies"].append(strategy)
+                rec["matched_by"].append(match)
+                dupes.append(uri)
+                continue
+            rec = {"post": p, "analysis": a, "author_pid": self._pid(ctx, did) if did else None,
+                   "author_local": local, "strategies": [strategy], "matched_by": [match], "captured_at": utcnow().isoformat()}
+            if uri:
+                self._run_seen[uri] = rec
+            kept.append(rec)
+        stats = {"seen": seen, "kept": len(kept), "dupes": len(dupes)}
+        if not kept and not dupes:
             return None, stats
-        body = json.dumps({"strategy": strategy, "query": extra or {}, "posts": kept}, ensure_ascii=False).encode("utf-8")
-        return Payload(tag=tag, body=body, ext="json", meta={"strategy": strategy, **(extra or {}), **stats}, n_items=len(kept)), stats
+        pl = Payload(tag=tag, body=b"", ext="json", meta={"strategy": strategy, **(extra or {}), **stats}, n_items=len(kept))
+        self._pending.append((pl, {"strategy": strategy, "query": extra or {}, "posts": kept, "dupes": dupes}))
+        return pl, stats
 
     # -- strategies ------------------------------------------------------------
     def fetch(self, ctx: Context) -> list[Payload]:
         client = BlueskyClient(ctx, ctx.env["BSKY_HANDLE"], ctx.env["BSKY_APP_PASSWORD"])
         client.login()
+        self._run_seen: dict[str, dict] = {}
+        self._pending: list[tuple[Payload, dict]] = []
         out: list[Payload] = []
         stats: dict[str, dict] = {}
         now = utcnow().replace(microsecond=0)
@@ -309,6 +328,9 @@ class BlueskySource(CaptureSource):
         stats["S5-HASH"] = s5
 
         ctx.store.health({"source": self.name, "event": "strategy_stats", "stats": stats, "api_calls": client.calls})
+        # serialise now, after all strategies have merged their matches into shared records
+        for pl, doc in self._pending:
+            pl.body = json.dumps(doc, ensure_ascii=False).encode("utf-8")
         return [p for p in out if p is not None]
 
     def _due(self, ctx: Context, key: str, days: int) -> bool:
