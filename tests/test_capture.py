@@ -86,3 +86,16 @@ def test_store_skips_unchanged_repeat(tmp_path):
     assert st.write("bods", p) is not None
     assert st.write("bods", Payload(tag="siri", body=b"<Siri/>", ext="xml")) is None
     assert st.write("bods", Payload(tag="siri", body=b"<Siri>x</Siri>", ext="xml")) is not None
+
+
+def test_parse_travel_updates_fixture():
+    from scraper.capture.sources.travel_updates import parse_updates
+    html = '''<div><div class="p-4 update-post wysiwyg"><h3>Fellgate lift - out of service</h3><p>Effective from: 18 Sep 2026, 08:30</p>
+    <p>The lift at Fellgate on platform 1 is out of service until Tuesday.</p><p>Last updated: 18 Sep 2026, 08:30</p></div>
+    <div class="hidden p-4 update-post wysiwyg"><h3>Resurfacing works, A184, Gateshead – Disruption to Services 21, 27</h3>
+    <p>Effective from: 17 Sep 2026, 20:00</p><p>Effective until: 25 Sep 2026, 06:00</p><p>Buses will divert via the Felling Bypass.</p></div></div>'''
+    ups = parse_updates(html)
+    assert len(ups) == 2
+    assert ups[0]["title"].startswith("Fellgate lift") and ups[0]["effective_from"] == "18 Sep 2026, 08:30" and ups[0]["mode_guess"] == "metro"
+    assert ups[0]["last_updated"] == "18 Sep 2026, 08:30" and "platform 1" in ups[0]["body"]
+    assert ups[1]["hidden"] is True and ups[1]["effective_until"] == "25 Sep 2026, 06:00" and ups[1]["mode_guess"] == "bus"
