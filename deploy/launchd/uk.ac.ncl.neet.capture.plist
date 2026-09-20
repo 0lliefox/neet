@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>uk.ac.ncl.neet.capture</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__HOME__/Documents/neet/.venv/bin/neet</string>
+    <string>capture</string>
+  </array>
+  <key>WorkingDirectory</key><string>__HOME__/Documents/neet</string>
+  <key>StartInterval</key><integer>600</integer>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>__HOME__/Library/Logs/neet-capture.out.log</string>
+  <key>StandardErrorPath</key><string>__HOME__/Library/Logs/neet-capture.err.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/usr/bin:/bin:/usr/sbin:/sbin:__HOME__/.local/bin</string>
+  </dict>
+  <key>Nice</key><integer>10</integer>
+</dict>
+</plist>

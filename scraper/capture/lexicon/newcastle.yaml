@@ -1,0 +1,267 @@
+# Bluesky collection lexicon for Tyne and Wear (WS-1). REVIEWED BY THE AUTHOR BEFORE FIRST RUN: (pending)
+# Tier 1: distinctive Tyne-and-Wear places (a hit alone is a location cue).
+# Tier 2: Metro stations (distinctive enough alone unless flagged generic).
+# Tier 3: generic names that need a second cue (topic word or a tier-1/2 term in the same post).
+places:
+  tier1:
+    - Newcastle upon Tyne
+    - Newcastle-upon-Tyne
+    - Tyneside
+    - Tyne and Wear
+    - Gateshead
+    - Jesmond
+    - Heaton
+    - Byker
+    - Gosforth
+    - Fenham
+    - Wallsend
+    - Benwell
+    - Elswick
+    - Scotswood
+    - Kenton
+    - Blakelaw
+    - Westerhope
+    - Denton Burn
+    - Lemington
+    - Newburn
+    - Throckley
+    - Ouseburn
+    - Sandyford
+    - Shieldfield
+    - Arthur's Hill
+    - Spital Tongues
+    - Cowgate
+    - Fawdon
+    - Kingston Park
+    - Newbiggin Hall
+    - Longbenton
+    - Killingworth
+    - Forest Hall
+    - Whitley Bay
+    - Tynemouth
+    - North Shields
+    - South Shields
+    - Jarrow
+    - Hebburn
+    - Felling
+    - Low Fell
+    - Dunston
+    - Whickham
+    - Blaydon
+    - Ryton
+    - Birtley
+    - Sunderland
+    - Metrocentre
+    - MetroCentre
+    - Tyne Bridge
+    - Swing Bridge
+    - Redheugh Bridge
+    - Scotswood Bridge
+    - Tyne Tunnel
+    - Central Motorway
+    - Coast Road
+    - Great North Road
+    - Grainger Street
+    - Northumberland Street
+    - Grey Street
+    - Percy Street
+    - Westgate Road
+    - Jesmond Road
+    - Osborne Road
+    - Chillingham Road
+    - Shields Road
+    - Heaton Road
+    - Gosforth High Street
+    - St James' Park
+    - Town Moor
+    - Exhibition Park
+    - Leazes Park
+    - Jesmond Dene
+    - Northumbria University
+    - Newcastle University
+    - RVI
+    - Freeman Hospital
+    - Newcastle Central Station
+    - Newcastle Airport
+    - Newcastle City Council
+    - Tyne and Wear Metro
+    - A1 Western Bypass
+    - A19
+    - A167
+    - A1058
+    - A184
+    - A69
+    - A695
+  tier2_metro_stations:
+    - Airport
+    - Callerton Parkway
+    - Bank Foot
+    - Kingston Park
+    - Fawdon
+    - Wansbeck Road
+    - Regent Centre
+    - South Gosforth
+    - Ilford Road
+    - West Jesmond
+    - Jesmond
+    - Haymarket
+    - Monument
+    - Central Station
+    - Gateshead
+    - Gateshead Stadium
+    - Felling
+    - Heworth
+    - Pelaw
+    - Hebburn
+    - Jarrow
+    - Bede
+    - Simonside
+    - Tyne Dock
+    - Chichester
+    - South Shields
+    - Fellgate
+    - Brockley Whins
+    - East Boldon
+    - Seaburn
+    - Stadium of Light
+    - St Peter's
+    - Sunderland
+    - Park Lane
+    - University
+    - Millfield
+    - Pallion
+    - St James
+    - Manors
+    - Byker
+    - Chillingham Road
+    - Walkergate
+    - Wallsend
+    - Hadrian Road
+    - Howdon
+    - Percy Main
+    - Meadow Well
+    - North Shields
+    - Tynemouth
+    - Cullercoats
+    - Whitley Bay
+    - Monkseaton
+    - West Monkseaton
+    - Shiremoor
+    - Northumberland Park
+    - Palmersville
+    - Benton
+    - Four Lane Ends
+    - Longbenton
+  tier3_generic_needs_cue:
+    - Newcastle
+    - Quayside
+    - Haymarket
+    - Nexus
+    - Eldon Square
+    - St James
+    - Manors
+    - Benton
+    - Felling
+    - Pelaw
+    - Metro
+    - Central Station
+    - University
+    - Airport
+    - High Street
+    - Park Lane
+    - Monument
+    - Walker
+    - Heaton
+    - Washington
+    - Sunderland
+    - Bede
+    - Chichester
+    - Millfield
+    - Simonside
+    - Fawdon
+# Exclusions appended to every S1/S5 search query (Bluesky supports -term negation).
+exclusions:
+  - NUFC
+  - '"Newcastle United"'
+  - Knights
+  - Jets
+  - NSW
+  - '"under-Lyme"'
+  - '"under Lyme"'
+  - Staffordshire
+  - Hunter
+  - Magpies
+  - SAFC
+  - '"Black Cats"'
+  - Eddie Howe
+# Client-side topic filter (posts must match >=1 topic term OR come from a seed/local author to be stored).
+topics:
+  flood: [flood, flooding, flooded, "burst main", "burst water main", "water main", "surface water", "river level", "Tyne level", overflow, "storm drain", "standing water"]
+  roadworks: [roadworks, "road works", "road closed", "road closure", closure, closed, diversion, "temporary lights", "traffic lights", "lane closed", "lane closure", resurfacing, "gas works", "water works", excavation, "footpath closed", "footway closed", "pavement closed"]
+  transport: [Metro, "no trains", "trains cancelled", "train cancelled", "Metro delays", "Metro delay", "Metro suspended", "replacement bus", "bus replacement", "line closure", "bus cancelled", "buses cancelled", "bus delays", "Tyne Tunnel", "ferry", disruption, disrupted, delays, delayed, "signal failure", "signalling", diverted, "buses diverted", "bus diverted", "diverted via"]
+  weather: [storm, "weather warning", "yellow warning", "amber warning", "red warning", gale, "high winds", "strong winds", snow, ice, icy, gritting, gritter, fog, heatwave, "heavy rain", downpour, thunder, lightning, hail, "Storm "]
+  crime: [police, "anti-social", "antisocial", "anti social", burglary, robbery, assault, stabbing, "shop lifting", shoplifting, vandalism, "arrested", "crime", "incident", "cordon", "cordoned"]
+  infrastructure: [pothole, potholes, "street light", "streetlight", "street lights", "traffic light", "bin collection", "bins", "fly tipping", "fly-tipping", "pavement", "kerb", "drain", "blocked drain", "sinkhole", "collapsed", "scaffolding"]
+# S2 seed accounts (Bluesky handles). Official / semi-official / local media / councillors found 2026-09-20.
+seed_accounts:
+  official:
+    - my-metro.bsky.social          # Tyne and Wear Metro, real-time travel updates (active)
+    - gatesheadcouncil.bsky.social  # Gateshead Council (official)
+    - newcastleuni.bsky.social      # Newcastle University
+  relay_bots:
+    - riverlevelsuk.bsky.social     # EA river level relay
+    - ukfloodalerts.bsky.social     # EA flood alert relay
+  local_media:
+    - chroniclelive.co.uk
+    - tyneandwear.bsky.social
+    - tyneandwearupdates.bsky.social
+    - tyneandweartoday.bsky.social
+    - gateshead.bsky.social
+    - northtyneside.bsky.social     # NOT the council; community account
+  councillors_and_civic:
+    - karenkilgour.bsky.social      # leader, Newcastle City Council
+    - alexhay.bsky.social           # deputy leader
+    - dangreenhough.bsky.social     # cabinet member
+    - nickhartleygreen.bsky.social  # Green group leader, Byker
+    - heatonvoice.bsky.social       # Heaton councillors
+    - bymattwilton.bsky.social      # Deputy Chief Executive, NCC
+    - ntstreetlife.bsky.social      # Street Life in North Tyneside (streets campaign)
+    - alisonstenning.bsky.social    # NT geographer; runs the North Tyneside feed
+    - johnsoncarl.bsky.social       # Deputy Mayor of North Tyneside
+# S3: starter packs / lists whose members are treated as "local" authors; plus bio search terms.
+starter_packs:
+  - at://did:plc:nxanllsnda2w3lxcns2govzj/app.bsky.graph.starterpack/3laemu7jchq2i   # North East Englanders
+  - at://did:plc:jknc3duc5kmti6siyfdoiyfb/app.bsky.graph.starterpack/3lbfymlxgke2c   # North East Journo Welcome Pack
+  - at://did:plc:2rlap75cg7vdacu7x6hg5dwd/app.bsky.graph.starterpack/3lbytyr66732e   # North East Active Travel
+  - at://did:plc:2rlap75cg7vdacu7x6hg5dwd/app.bsky.graph.starterpack/3latlhnywpn25   # Newcastle Cycling Campaign
+  - at://did:plc:ypkds6art63mq3sfsxvdczzt/app.bsky.graph.starterpack/3laycaq2brh2u   # North Tyneside!
+  - at://did:plc:mgjhecrdzfkbha2zbsfkd33h/app.bsky.graph.starterpack/3lbmoioxtgm2s   # Newcastle Labour
+bio_terms:
+  - "Newcastle upon Tyne"
+  - Tyneside
+  - "Tyne and Wear"
+  - Gateshead
+  - Jesmond
+  - Heaton
+  - Gosforth
+  - Byker
+  - Wallsend
+  - "North Tyneside"
+  - "South Tyneside"
+  - "North East England"
+  - Geordie
+  - NE1
+  - NE2
+  - NE3
+  - NE4
+  - NE5
+  - NE6
+  - NE7
+  - NE8
+# S4 community feeds.
+feeds:
+  - at://did:plc:ypkds6art63mq3sfsxvdczzt/app.bsky.feed.generator/aaafrb26555cg   # North Tyneside (keyword feed)
+  - at://did:plc:yfrae62vopyax7pixtnecwyh/app.bsky.feed.generator/aaaewoxe3indc   # Tyne Valley
+  - at://did:plc:7rfbavbegy5p5epvdkyjrue5/app.bsky.feed.generator/we-are-ncl      # #WeAreNCL
+# S5 hashtags (without #).
+hashtags: [Newcastle, NewcastleUponTyne, Tyneside, NEFollowers, NorthEast, Gateshead, NorthTyneside, SouthTyneside, Jesmond, Heaton, Gosforth, Byker]

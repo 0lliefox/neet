@@ -118,6 +118,11 @@ def _load_scrapers(sources: list[str], max_per_source: int, cfg: dict):
     return scrapers
 
 def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv and argv[0] == "capture":
+        from scraper.capture.cli import main as capture_main
+        return capture_main(argv[1:])
     parser = argparse.ArgumentParser(
         description="Scrape North East civic evidence snippets for the NEET dataset."
     )

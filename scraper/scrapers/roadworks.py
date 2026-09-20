@@ -77,22 +77,7 @@ class RoadworksScraper(BaseScraper):
         "/tileserv.maplayer_roadworks/{z}/{x}/{y}.pbf"
     )
 
-    def _scrape_one_network_tiles(self) -> list[EvidenceItem]:
-        try:
-            import mapbox_vector_tile
-        except ImportError:
-            logger.warning("mapbox-vector-tile not installed; skipping tile stage")
-            return []
-
-        import requests
-
-        scraped_at = datetime.now(timezone.utc)
-
-        start_dt = scraped_at.replace(hour=23, minute=0, second=0, microsecond=0) - timedelta(days=self._days_past)
-        end_dt = scraped_at.replace(hour=22, minute=59, second=59, microsecond=0) + timedelta(days=self._days_future)
-        start_date = start_dt.strftime("%d/%m/%Y %H:%M:%S")
-        end_date = end_dt.strftime("%d/%m/%Y %H:%M:%S")
-
+    def _tile_request(self, start_date: str, end_date: str) -> tuple[dict, dict]:
         filters = json.dumps({
             "impact": ["-1", "0", "1", "2", "3", "4"],
             "works_state": ["-1", "0", "2", "3", "4", "5", "6", "8"],
@@ -120,40 +105,73 @@ class RoadworksScraper(BaseScraper):
             "Referer": "https://community.newcastle.gov.uk/",
             "Accept": "*/*",
         }
+        return params, headers
+
+    def _scrape_one_network_tiles(self) -> list[EvidenceItem]:
+        try:
+            import mapbox_vector_tile
+        except ImportError:
+            logger.warning("mapbox-vector-tile not installed; skipping tile stage")
+            return []
+
+        import requests
+
+        scraped_at = datetime.now(timezone.utc)
+
+        start_dt = scraped_at.replace(hour=23, minute=0, second=0, microsecond=0) - timedelta(days=self._days_past)
+        end_dt = scraped_at.replace(hour=22, minute=59, second=59, microsecond=0) + timedelta(days=self._days_future)
+        start_date = start_dt.strftime("%d/%m/%Y %H:%M:%S")
+        end_date = end_dt.strftime("%d/%m/%Y %H:%M:%S")
+
+        params, headers = self._tile_request(start_date, end_date)
 
         items: list[EvidenceItem] = []
-        z = self._tile_zoom
-        seen_ids: set[str] = set()
-
-        for x, y in self._tiles:
+        for props in self._iter_tile_features(params, headers):
             if len(items) >= self.max_items:
                 break
+            item = self._tile_feature_to_item(props, scraped_at.isoformat())
+            if item:
+                items.append(item)
+        logger.info("Roadworks One.Network tiles: %d items from %d tiles", len(items), len(self._tiles))
+        return items
+
+    def _iter_tile_features(self, params: dict, headers: dict):
+        """Yield raw feature property dicts from every configured tile (deduplicated by id/work_ref/usrn)."""
+        import mapbox_vector_tile
+        import requests
+
+        z = self._tile_zoom
+        seen_ids: set[str] = set()
+        for x, y in self._tiles:
             url = self.ONE_NETWORK_TILE_URL.format(z=z, x=x, y=y)
             try:
                 resp = requests.get(url, params=params, headers=headers, timeout=15)
                 if not resp.ok or not resp.content:
                     logger.debug("Tile %s/%s/%s: status=%s size=%s", z, x, y, resp.status_code, len(resp.content))
                     continue
-                logger.debug("Tile %s/%s/%s: %s bytes", z, x, y, len(resp.content))
                 tile = mapbox_vector_tile.decode(resp.content)
                 for layer_name, layer in tile.items():
                     for feat in layer.get("features", []):
-                        if len(items) >= self.max_items:
-                            break
-                        props = feat.get("properties", {})
+                        props = dict(feat.get("properties", {}))
                         uid = str(props.get("id") or props.get("work_ref") or props.get("usrn", ""))
                         if uid and uid in seen_ids:
                             continue
                         if uid:
                             seen_ids.add(uid)
-                        item = self._tile_feature_to_item(props, scraped_at.isoformat())
-                        if item:
-                            items.append(item)
+                        props["_tile"] = f"{z}/{x}/{y}"
+                        props["_layer"] = layer_name
+                        yield props
             except Exception as exc:
                 logger.debug("Tile %s/%s/%s fetch error: %s", z, x, y, exc)
 
-        logger.info("Roadworks One.Network tiles: %d items from %d tiles", len(items), len(self._tiles))
-        return items
+    def fetch_tile_features(self) -> list[dict]:
+        """Raw one.network feature properties for the configured window (used by the capture job)."""
+        from datetime import datetime, timezone, timedelta
+        scraped_at = datetime.now(timezone.utc)
+        start_dt = scraped_at.replace(hour=23, minute=0, second=0, microsecond=0) - timedelta(days=self._days_past)
+        end_dt = scraped_at.replace(hour=22, minute=59, second=59, microsecond=0) + timedelta(days=self._days_future)
+        params, headers = self._tile_request(start_dt.strftime("%d/%m/%Y %H:%M:%S"), end_dt.strftime("%d/%m/%Y %H:%M:%S"))
+        return list(self._iter_tile_features(params, headers))
 
     IMPACT_LABELS = {
         "0": "no delay", "1": "delays unlikely", "2": "delays possible",

@@ -241,3 +241,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+
+# NEET v2 capture (raw data lives on the capture host / Drive)
+data/capture_root/
+.DS_Store
+.idea/
+__pycache__/

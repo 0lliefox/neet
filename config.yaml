@@ -204,3 +204,24 @@ sources:
       - path
       - building work
     max_items: 10
+
+# ---------------------------------------------------------------------------
+# Forward capture (NEET v2, `neet capture`). data_root may also come from $NEET_DATA_ROOT.
+capture:
+  data_root: data/capture_root
+  sources:
+    rss: {cadence_s: 3600}
+    nswws: {cadence_s: 1800}
+    metoffice_hourly: {cadence_s: 3600, latitude: 54.9781, longitude: -1.6162, kinds: [hourly]}
+    bods_sirisx: {cadence_s: 600}
+    ea: {cadence_s: 3600, latitude: 54.9781, longitude: -1.6162, dist_km: 15, counties: ["Tyne and Wear", "Northumberland", "Durham"]}
+    ea_archive: {cadence_s: 21600, lookback_days: 3}
+    uo:
+      cadence_s: 21600
+      lookback_days: 2
+      bbox: {bbox_p1_x: -1.80, bbox_p1_y: 54.90, bbox_p2_x: -1.35, bbox_p2_y: 55.08}
+      variables: ["Journey Time", "NO2", "Temperature", "Humidity", "Wind Speed", "Occupied spaces", "PM2.5", "Rainfall", "Traffic Flow"]
+    police: {cadence_s: 86400, points: [{lat: 54.9781, lng: -1.6162, name: newcastle_centre}, {lat: 54.9627, lng: -1.6017, name: gateshead}, {lat: 55.0090, lng: -1.4470, name: north_shields}]}
+    streetmanager_archive: {cadence_s: 86400, kinds: [permit, activity, section_58], min_key_year: 2026}
+    onenetwork: {cadence_s: 86400}
+    bluesky: {cadence_s: 1800, s3_max_authors: 600}
