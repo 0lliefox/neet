@@ -78,3 +78,11 @@ def test_bluesky_run_dedups_by_uri(tmp_path):
     d1 = json.loads(p1.body)
     assert d1["posts"][0]["strategies"] == ["S1-KW", "S5-HASH"] and len(d1["posts"][0]["matched_by"]) == 3
     assert json.loads(p2.body)["dupes"] == ["at://x/1"]
+
+
+def test_store_skips_unchanged_repeat(tmp_path):
+    st = Store(tmp_path)
+    p = Payload(tag="siri", body=b"<Siri/>", ext="xml")
+    assert st.write("bods", p) is not None
+    assert st.write("bods", Payload(tag="siri", body=b"<Siri/>", ext="xml")) is None
+    assert st.write("bods", Payload(tag="siri", body=b"<Siri>x</Siri>", ext="xml")) is not None

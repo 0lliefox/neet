@@ -69,8 +69,22 @@ class Store:
             d.mkdir(parents=True, exist_ok=True)
 
     # -- payloads -----------------------------------------------------------
-    def write(self, source: str, payload: Payload, when: datetime | None = None) -> Path:
+    def _last_hash_path(self, source: str, tag: str) -> Path:
+        return self.state_dir / "_hashes" / _safe(source) / (_safe(tag) + ".sha256")
+
+    def unchanged(self, source: str, payload: Payload) -> bool:
+        """True if this (source, tag) payload has exactly the same content as the last one stored."""
+        p = self._last_hash_path(source, payload.tag)
+        return p.exists() and p.read_text().strip() == hashlib.sha256(payload.body).hexdigest()
+
+    def write(self, source: str, payload: Payload, when: datetime | None = None, skip_unchanged: bool = True) -> Path | None:
+        """Persist a payload. With skip_unchanged, an identical repeat of the previous payload for the same
+        (source, tag) is not written again (returns None); the health log still records that it was seen."""
         when = when or utcnow()
+        digest = hashlib.sha256(payload.body).hexdigest()
+        hp = self._last_hash_path(source, payload.tag)
+        if skip_unchanged and hp.exists() and hp.read_text().strip() == digest:
+            return None
         day = when.strftime("%Y-%m-%d")
         stamp = when.strftime("%H%M%S")
         base = f"{stamp}_{_safe(payload.tag)}"
@@ -92,6 +106,7 @@ class Store:
             "file": path.name,
         })
         atomic_write_json(path.with_suffix(path.suffix + ".meta.json") if not path.name.endswith(".meta.json") else path, meta)
+        atomic_write_bytes(hp, digest.encode())
         return path
 
     # -- health --------------------------------------------------------------

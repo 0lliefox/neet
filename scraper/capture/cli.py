@@ -90,15 +90,20 @@ def main(argv: list[str] | None = None) -> int:
                 payloads = src.fetch(ctx)
                 n_items = 0
                 statuses = []
+                n_written = n_unchanged = 0
                 for p in payloads:
                     if p is None:
                         continue
-                    store.write(src.name, p)
+                    if store.write(src.name, p) is None:
+                        n_unchanged += 1
+                    else:
+                        n_written += 1
                     n_items += p.n_items or 0
                     statuses.append(p.meta.get("status"))
                 ok = all((s is None) or (200 <= int(s) < 300) for s in statuses) if statuses else True
                 state.mark_run(ok=ok); state.save()
-                store.health({"source": src.name, "ok": ok, "n_payloads": len(payloads), "n_items": n_items,
+                store.health({"source": src.name, "ok": ok, "n_payloads": len(payloads), "n_written": n_written,
+                              "n_unchanged": n_unchanged, "n_items": n_items,
                               "duration_s": round(time.time() - t0, 1), "statuses": statuses[:20]})
                 n_ok += 1
             except Exception as exc:
