@@ -19,16 +19,17 @@ class NSWWSSource(CaptureSource):
         headers = {"apikey": ctx.env["NSWWS_KEY"], "Accept": "application/atom+xml, application/json"}
         r = self.get(ctx, f"{base}/objects/feed", headers=headers)
         out = [self.payload_from_response("feed", r, ext="xml")]
-        seen: set[str] = set(ctx.state.get("seen_ids", []))
-        new_ids: list[str] = []
+        # The feed links to per-warning objects (/objects/issued|updated/<uuid>/) and to a collection whose UUID is
+        # stable while its content changes, so every linked object is fetched on every run (they are small);
+        # duplicates are cheap and the store keeps each fetch as its own timestamped payload.
         if r.ok:
-            for kind, uuid in re.findall(r"/objects/(issued|updated)/([0-9a-fA-F-]{36})", r.text):
-                key = f"{kind}/{uuid}"
-                if key in seen:
-                    continue
+            for kind, uuid in dict.fromkeys(re.findall(r"/objects/(issued|updated)/([0-9a-fA-F-]{36})", r.text)):
                 rr = self.get(ctx, f"{base}/objects/{kind}/{uuid}", headers={"apikey": ctx.env["NSWWS_KEY"]})
-                out.append(self.payload_from_response(f"{kind}_{uuid}", rr, ext="json"))
+                n = None
                 if rr.ok:
-                    new_ids.append(key)
-        ctx.state.set("seen_ids", (list(seen) + new_ids)[-2000:])
+                    try:
+                        n = len(rr.json().get("features", []))
+                    except ValueError:
+                        n = None
+                out.append(self.payload_from_response(f"{kind}_{uuid}", rr, ext="json", n_items=n))
         return out
