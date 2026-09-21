@@ -30,6 +30,24 @@ def _data_root(cfg: dict, override: str | None) -> Path:
     return Path(root).expanduser()
 
 
+
+def _lock_holder_alive(lock) -> bool:
+    """A lock names the PID that took it; the lock is live only while that process exists.
+    (An interrupted download otherwise blocked its source for max(6 h, 3 x cadence).)"""
+    try:
+        pid = int((lock.read_text() or "0").strip() or 0)
+    except (OSError, ValueError):
+        return False
+    if pid <= 0:
+        return False
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="neet capture")
     ap.add_argument("--config", default=None)
@@ -74,6 +92,10 @@ def main(argv: list[str] | None = None) -> int:
         lock = store.state_dir / f".lock_{src.name}"
         if lock.exists():
             age = time.time() - lock.stat().st_mtime
+            if not _lock_holder_alive(lock):
+                logger.info("%s: stale lock (holder gone, age %.0fs); removing", src.name, age)
+                lock.unlink(missing_ok=True)
+        if lock.exists():
             if age < max(6 * 3600, 3 * src.cadence_s):
                 logger.info("%s: previous run still active (lock age %.0fs); skipping", src.name, age)
                 continue
