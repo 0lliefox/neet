@@ -74,6 +74,16 @@ class HelperTests(unittest.TestCase):
         g2 = tile_geometry_to_wgs84({"type": "LineString", "coordinates": [[px, py], [px + 10, py + 10]]}, z, x, y, extent)
         self.assertEqual(len(g2["coordinates"]), 2)
 
+    def test_gazetteer_lookup_and_text_geocoding(self):
+        from scraper.feeds.gazetteer import geocode_text, lookup, road_names
+        hit = lookup("Grainger Street")
+        self.assertIsNotNone(hit)
+        self.assertAlmostEqual(hit["lat"], 54.97, places=1)
+        self.assertEqual(road_names("Roadworks on Malvern Road and the A1058 until Friday"), ["Malvern Road", "A1058"])
+        g = geocode_text("Roadworks on Grainger Street near Grey's Monument", ["Newcastle"])
+        self.assertEqual((g["name"], g["method"]), ("Grainger Street", "gazetteer"))
+        self.assertIsNone(geocode_text("nothing geographic here", []))
+
     def test_place_hits_uses_gazetteer(self):
         self.assertIn("Gateshead", place_hits("Traffic chaos in Gateshead this morning"))
         self.assertEqual(place_hits("nothing here"), [])

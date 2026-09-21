@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Iterable, Iterator, Optional
 
 from .base import adapters
-from .model import EvidenceRecord
+from .model import EvidenceRecord, Place
 
 
 def iter_payloads(root: Path, sources: Optional[set[str]] = None, since: Optional[str] = None, until: Optional[str] = None) -> Iterator[tuple[Path, dict]]:
@@ -80,8 +80,32 @@ def build_records(root: Path, sources: Optional[set[str]] = None, since: Optiona
         for uri, meta in pending_dupes:
             if uri not in by_uri:
                 errors.append({"file": meta.get("file"), "error": f"unresolved dupe {uri}"})
+    enrich(out)
     out.sort(key=lambda r: (r.source, r.valid_from or "", r.record_id))
     return out
+
+
+def enrich(records: list[EvidenceRecord]) -> None:
+    """Cross-record enrichment that no single payload can do:
+    * EA readings inherit the geometry of their station from the station inventory records;
+    * text-only records (headlines, posts, bus/Metro notices) get a point from the gazetteer when their text
+      names a road or a lexicon place (method 'gazetteer', lower confidence than source geometry)."""
+    from .gazetteer import geocode_text
+    from .geo import place_hits
+    stations: dict[str, EvidenceRecord] = {}
+    for r in records:
+        if r.source == "ea" and r.structured.get("station") is True and r.structured.get("stationReference"):
+            stations[str(r.structured["stationReference"])] = r
+    for r in records:
+        if r.source == "ea" and "value" in r.structured and r.place.geometry is None:
+            st = stations.get(str(r.structured.get("station") or ""))
+            if st is not None and st.place.geometry is not None:
+                r.place = Place(name=st.place.name, geometry=st.place.geometry, confidence=st.place.confidence, method="source_geometry")
+        elif r.text and r.place.geometry is None:
+            hit = geocode_text(r.text, place_hits(r.text) if r.place.name is None else [r.place.name, *place_hits(r.text)])
+            if hit:
+                r.place = Place(name=hit["name"], usrn=r.place.usrn, geometry=hit["geometry"], admin_area=r.place.admin_area,
+                                confidence=hit["confidence"], method=hit["method"])
 
 
 def write_jsonl(records: Iterable[EvidenceRecord], out_path: Path) -> int:
