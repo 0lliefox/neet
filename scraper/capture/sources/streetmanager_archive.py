@@ -20,6 +20,7 @@ class StreetManagerArchiveSource(CaptureSource):
         from datetime import datetime, timezone
         year_now = datetime.now(timezone.utc).year
         min_year = int(self.cfg.get("min_key_year", 2026))
+        max_per_run = int(self.cfg.get("max_downloads_per_run", 2))
         for kind in self.cfg.get("kinds", ["permit", "activity", "section_58"]):
             keys: list[str] = []
             for year in range(min_year, year_now + 1):
@@ -30,6 +31,8 @@ class StreetManagerArchiveSource(CaptureSource):
             for key in sorted(keys):
                 if key in done:
                     continue
+                if len(out) >= max_per_run:
+                    break   # ~1 GB each: pace the backfill so one run cannot swallow the Drive quota
                 rr = self.get(ctx, BASE + key, timeout=1800)
                 if rr.ok and rr.content:
                     out.append(Payload(tag=key.replace("/", "_").replace(".zip", ""), body=rr.content, ext="zip",

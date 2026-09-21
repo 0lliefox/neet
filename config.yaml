@@ -222,7 +222,7 @@ capture:
       bbox: {bbox_p1_x: -1.80, bbox_p1_y: 54.90, bbox_p2_x: -1.35, bbox_p2_y: 55.08}
       variables: ["Journey Time", "NO2", "Temperature", "Humidity", "Wind Speed", "Occupied spaces", "PM2.5", "Rainfall", "Traffic Flow"]
     police: {cadence_s: 86400, points: [{lat: 54.9781, lng: -1.6162, name: newcastle_centre}, {lat: 54.9627, lng: -1.6017, name: gateshead}, {lat: 55.0090, lng: -1.4470, name: north_shields}]}
-    streetmanager_archive: {cadence_s: 86400, kinds: [permit, activity, section_58], min_key_year: 2026}
+    streetmanager_archive: {cadence_s: 86400, kinds: [permit, activity, section_58], min_key_year: 2026, max_downloads_per_run: 2}
     onenetwork: {cadence_s: 86400}
     bluesky: {cadence_s: 1800, s3_max_authors: 600}
     travel_updates: {cadence_s: 3600}
