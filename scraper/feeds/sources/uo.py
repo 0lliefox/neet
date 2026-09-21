@@ -52,7 +52,7 @@ class UoAdapter(Adapter):
 
     def _sensor(self, s: dict[str, Any], meta: dict[str, Any]) -> EvidenceRecord:
         return EvidenceRecord(
-            source=self.source, kind="observation", domain="other", text=None,
+            source=self.source, kind="inventory", domain="other", text=None,
             structured={"sensor": True, **{k: s.get(k) for k in ("Sensor_Name", "Broker_Name", "Raw_ID", "Third_Party", "Sensor_Height_Above_Ground",
                                                                   "Ground_Height_Above_Sea_Level", "Location_WKT")}},
             place=_sensor_place(s), observed_at=None, fetched_at=self.fetched_at(meta),

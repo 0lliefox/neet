@@ -46,7 +46,7 @@ class EaAdapter(Adapter):
     def _station(self, i: dict, meta: dict, tag: str) -> EvidenceRecord:
         geom = point(i.get("long"), i.get("lat"))
         return EvidenceRecord(
-            source=self.source, kind="observation", domain="flood", text=None,
+            source=self.source, kind="inventory", domain="flood", text=None,
             structured={"station": True, "parameter": tag.replace("stations_", ""), "stationReference": i.get("stationReference"),
                         "label": i.get("label"), "riverName": i.get("riverName"), "town": i.get("town"), "notation": i.get("notation"),
                         "measures": [m.get("@id") if isinstance(m, dict) else m for m in (i.get("measures") or [])]},

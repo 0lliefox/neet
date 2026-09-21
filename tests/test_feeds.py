@@ -124,7 +124,7 @@ class AdapterGoldenTests(unittest.TestCase):
     def test_ea(self):
         recs = records_for("ea")
         kinds = {(r.kind, r.structured.get("station") is True, "value" in r.structured) for r in recs}
-        self.assertIn(("observation", True, False), kinds)     # station inventory
+        self.assertIn(("inventory", True, False), kinds)       # station inventory: no validity, never a reading
         self.assertIn(("observation", False, True), kinds)     # readings
         stations = [r for r in recs if r.structured.get("station") is True]
         self.assertTrue(all(r.place.geometry and r.place.geometry["type"] == "Point" for r in stations))

@@ -11,7 +11,9 @@ import json
 from dataclasses import asdict, dataclass, field
 from typing import Any, Optional
 
-KINDS = ("notice", "warning", "observation", "forecast", "crime_record", "post", "headline")
+# "inventory" is a station/sensor description, not a measurement: it has no validity interval and must never
+# be counted as a reading (a timeless atom otherwise matches every temporal window downstream).
+KINDS = ("notice", "warning", "observation", "inventory", "forecast", "crime_record", "post", "headline")
 DOMAINS = ("roadworks", "transport", "weather", "flood", "crime", "other")
 RELIABILITY_HINTS = ("official_signed", "official_operator", "media", "social")
 
