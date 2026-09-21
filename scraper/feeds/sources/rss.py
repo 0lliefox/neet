@@ -29,7 +29,7 @@ class RssAdapter(Adapter):
     reliability_hint = "media"
 
     def records(self, body: bytes, meta: dict[str, Any]) -> list[EvidenceRecord]:
-        root = ET.fromstring(body)
+        root = ET.fromstring(body.lstrip())   # some feeds prefix the XML declaration with blank lines
         out: list[EvidenceRecord] = []
         feed = str(meta.get("tag") or "rss")
         for item in root.iter("item"):

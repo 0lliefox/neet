@@ -226,3 +226,4 @@ capture:
     onenetwork: {cadence_s: 86400}
     bluesky: {cadence_s: 1800, s3_max_authors: 600}
     travel_updates: {cadence_s: 3600}
+    fixmystreet: {cadence_s: 21600, lookback_days: 7, bodies: {newcastle: 2529}}   # other Tyne and Wear body ids to be confirmed

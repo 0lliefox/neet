@@ -58,6 +58,9 @@ def build_records(root: Path, sources: Optional[set[str]] = None, since: Optiona
         adapter = reg.get(meta["source"])
         if adapter is None or not adapter.accepts(meta):
             continue
+        status = meta.get("status")
+        if status is not None and not (200 <= int(status) < 300):
+            continue   # the store keeps error responses for the record; they are not evidence
         try:
             recs = adapter.records(payload.read_bytes(), meta)
         except Exception as e:  # one bad payload must not sink the build

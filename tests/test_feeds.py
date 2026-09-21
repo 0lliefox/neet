@@ -103,7 +103,7 @@ class HelperTests(unittest.TestCase):
 class AdapterGoldenTests(unittest.TestCase):
     def test_every_source_has_an_adapter(self):
         self.assertEqual(set(adapters()), {"rss", "police", "ea", "onenetwork", "bluesky", "travel_updates", "metoffice_hourly",
-                                           "bods_sirisx", "uo", "nswws", "streetmanager_archive"})
+                                           "bods_sirisx", "uo", "nswws", "streetmanager_archive", "fixmystreet"})
 
     def test_rss(self):
         recs = records_for("rss")
@@ -174,6 +174,25 @@ class AdapterGoldenTests(unittest.TestCase):
         self.assertGreater(len(data), 20)
         self.assertTrue(all(r.place.geometry for r in inv))
         self.assertTrue(all(r.domain == "transport" for r in data))   # Journey Time page
+
+    def test_fixmystreet(self):
+        recs = records_for("fixmystreet")
+        self.assertEqual(len(recs), 15)
+        self.assertTrue(all(r.kind == "post" and r.reliability_hint == "social" and r.place.geometry and r.native_id for r in recs))
+        self.assertTrue(any(r.domain == "crime" for r in recs))   # abandoned vehicles
+
+    def test_sensor_window(self):
+        from scraper.feeds.windows import geometry_centroid, window
+        recs = build_records(FIXTURES.parent)
+        obs = [r for r in recs if r.source == "uo" and "Value" in r.structured]
+        c = geometry_centroid(obs[0].place.geometry)   # journey-time sensors are LineStrings
+        w = window(recs, "Journey Time", lon=c[0], lat=c[1], radius_m=3000)
+        self.assertGreater(len(w.readings), 0)
+        self.assertTrue(all(d <= 3000 for *_, d in w.readings))
+        self.assertEqual(w.summary()["variable"], "Journey Time")
+        self.assertEqual(window(recs, "Journey Time", lon=0.0, lat=51.5, radius_m=1000).readings, [])
+        w2 = window(recs, "Journey Time", lon=c[0], lat=c[1], radius_m=3000, t0="2030-01-01T00:00:00Z")
+        self.assertEqual(w2.readings, [])
 
     def test_nswws_empty_object(self):
         # the captured object has no features (no warning in force); the adapter must return nothing, not fail
