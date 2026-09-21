@@ -1,0 +1,12 @@
+{
+ "bytes": 434290,
+ "content_type": "application/json",
+ "fetched_at": "2026-09-20T16:13:23.354063+00:00",
+ "file": "161323_newcastle_centre_2026-05.json",
+ "n_items": 1158,
+ "sha256": "98bf60b8a6426878a49e53cdbb02a5744b8e878a2995354ce4cafa8fbd6c8726",
+ "source": "police",
+ "status": 200,
+ "tag": "newcastle_centre_2026-05",
+ "url": "https://data.police.uk/api/crimes-street/all-crime?lat=54.9781&lng=-1.6162&date=2026-05"
+}

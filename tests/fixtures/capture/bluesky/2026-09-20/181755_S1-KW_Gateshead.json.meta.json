@@ -1,0 +1,17 @@
+{
+ "bytes": 9214,
+ "dupes": 0,
+ "fetched_at": "2026-09-20T18:17:55.708496+00:00",
+ "file": "181755_S1-KW_Gateshead.json",
+ "hitsTotal": 3,
+ "kept": 3,
+ "n_items": 3,
+ "q": "Gateshead -NUFC -\"Newcastle United\" -Knights -Jets -NSW -\"under-Lyme\" -\"under Lyme\" -Staffordshire -Hunter -Magpies -SAFC -\"Black Cats\" -\"Eddie Howe\"",
+ "seen": 3,
+ "sha256": "06b558fbd2ba4a6ad6121db55c9c3aa23bf43692f5e3155304c750d1ab79538b",
+ "since": "2026-09-20T17:46:04Z",
+ "source": "bluesky",
+ "strategy": "S1-KW",
+ "tag": "S1-KW_Gateshead",
+ "until": "2026-09-20T18:17:05Z"
+}

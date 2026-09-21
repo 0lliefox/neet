@@ -1,0 +1,12 @@
+{
+ "bytes": 25942,
+ "content_type": "application/json",
+ "fetched_at": "2026-09-20T23:28:21.617079+00:00",
+ "file": "232821_hourly_newcastle.json",
+ "n_items": null,
+ "sha256": "4e4e1a5defd0f249008a126f033e27eb2bfa2ba64e621203a9bc8792e178c131",
+ "source": "metoffice_hourly",
+ "status": 200,
+ "tag": "hourly_newcastle",
+ "url": "https://data.hub.api.metoffice.gov.uk/sitespecific/v0/point/hourly?latitude=54.9781&longitude=-1.6162&includeLocationName=true"
+}

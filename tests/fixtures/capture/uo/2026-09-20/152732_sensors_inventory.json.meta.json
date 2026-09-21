@@ -1,0 +1,12 @@
+{
+ "bytes": 576948,
+ "content_type": "application/json",
+ "fetched_at": "2026-09-20T15:27:32.832583+00:00",
+ "file": "152732_sensors_inventory.json",
+ "n_items": null,
+ "sha256": "bda587551a11e144e77849e875ec6d89bfe228fbe29d6bf214b42354748e10eb",
+ "source": "uo",
+ "status": 200,
+ "tag": "sensors_inventory",
+ "url": "https://api.v2.urbanobservatory.ac.uk/sensors/json?bbox_p1_x=-1.8&bbox_p1_y=54.9&bbox_p2_x=-1.35&bbox_p2_y=55.08&limit=10000"
+}

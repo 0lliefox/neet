@@ -32,6 +32,36 @@ _DEFAULT_TILES = [
     (508, 323), (508, 324),
 ]
 
+import math as _math
+
+
+def tile_geometry_to_wgs84(geometry, z: int, x: int, y: int, extent: int = 4096):
+    """Convert a decoded Mapbox-vector-tile geometry (tile-local integer coordinates, origin bottom-left as
+    `mapbox_vector_tile.decode` returns by default) into WGS84 GeoJSON for tile z/x/y."""
+    if not isinstance(geometry, dict) or "coordinates" not in geometry:
+        return None
+    n = 2 ** z
+
+    def conv(pt):
+        px, py = float(pt[0]), float(pt[1])
+        lon = (x + px / extent) / n * 360.0 - 180.0
+        lat_rad = _math.atan(_math.sinh(_math.pi * (1 - 2 * (y + (extent - py) / extent) / n)))
+        return [round(lon, 6), round(_math.degrees(lat_rad), 6)]
+
+    def walk(coords, depth):
+        if depth == 0:
+            return conv(coords)
+        return [walk(c, depth - 1) for c in coords]
+
+    depth = {"Point": 0, "MultiPoint": 1, "LineString": 1, "MultiLineString": 2, "Polygon": 2, "MultiPolygon": 3}.get(geometry.get("type"))
+    if depth is None:
+        return None
+    try:
+        return {"type": geometry["type"], "coordinates": walk(geometry["coordinates"], depth)}
+    except (TypeError, IndexError, ValueError):
+        return None
+
+
 class RoadworksScraper(BaseScraper):
     domain = "roadworks"
     source_name = "Newcastle City Council Roadworks"
@@ -151,6 +181,7 @@ class RoadworksScraper(BaseScraper):
                     continue
                 tile = mapbox_vector_tile.decode(resp.content)
                 for layer_name, layer in tile.items():
+                    extent = int(layer.get("extent") or 4096)
                     for feat in layer.get("features", []):
                         props = dict(feat.get("properties", {}))
                         uid = str(props.get("id") or props.get("work_ref") or props.get("usrn", ""))
@@ -160,6 +191,10 @@ class RoadworksScraper(BaseScraper):
                             seen_ids.add(uid)
                         props["_tile"] = f"{z}/{x}/{y}"
                         props["_layer"] = layer_name
+                        # Keep the works geometry (WS1): tile-local coordinates -> WGS84 GeoJSON.
+                        geom = tile_geometry_to_wgs84(feat.get("geometry"), z, x, y, extent)
+                        if geom is not None:
+                            props["_geometry"] = geom
                         yield props
             except Exception as exc:
                 logger.debug("Tile %s/%s/%s fetch error: %s", z, x, y, exc)

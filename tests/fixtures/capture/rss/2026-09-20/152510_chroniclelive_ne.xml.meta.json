@@ -1,0 +1,12 @@
+{
+ "bytes": 34725,
+ "content_type": "application/rss+xml; charset=utf-8",
+ "fetched_at": "2026-09-20T15:25:10.611120+00:00",
+ "file": "152510_chroniclelive_ne.xml",
+ "n_items": 25,
+ "sha256": "2f7fe2b3f72d93fc347674b5207e129d95fa5d4f814fb6037ead622126a566fe",
+ "source": "rss",
+ "status": 200,
+ "tag": "chroniclelive_ne",
+ "url": "https://www.chroniclelive.co.uk/news/north-east-news/?service=rss"
+}

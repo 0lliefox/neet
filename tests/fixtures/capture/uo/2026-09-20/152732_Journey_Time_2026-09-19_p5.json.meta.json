@@ -1,0 +1,15 @@
+{
+ "bytes": 814934,
+ "content_type": "application/json",
+ "day": "2026-09-19",
+ "fetched_at": "2026-09-20T15:27:32.848587+00:00",
+ "file": "152732_Journey_Time_2026-09-19_p5.json",
+ "n_items": 5000,
+ "offset": 25000,
+ "sha256": "f0c7f36e0ec0eb04c11e23f7fa5319a1699961313d132edc99548429c70e56a0",
+ "source": "uo",
+ "status": 200,
+ "tag": "Journey Time_2026-09-19_p5",
+ "url": "https://api.v2.urbanobservatory.ac.uk/sensors/data/json?bbox_p1_x=-1.8&bbox_p1_y=54.9&bbox_p2_x=-1.35&bbox_p2_y=55.08&start=2026-09-19T00%3A00%3A00&end=2026-09-19T23%3A59%3A59&variables=Journey+Time&limit=5000&offset=25000",
+ "variable": "Journey Time"
+}

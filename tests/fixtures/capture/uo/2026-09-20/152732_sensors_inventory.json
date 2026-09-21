@@ -1,0 +1,411 @@
+{
+ "Sensors": [
+  {
+   "Sensor_Name": "PER_WUNDERGROUND_ICRAWCRO3",
+   "Location_WKT": "POINT(-1.778519 54.965347)",
+   "Sensor_Centroid_Longitude": -1.778519,
+   "Ground_Height_Above_Sea_Level": 98.8600006103516,
+   "Sensor_Centroid_Latitude": 54.965347,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Wunderground API",
+   "Raw_ID": "1"
+  },
+  {
+   "Sensor_Name": "PER_WUNDERGROUND_ITYNEAND12",
+   "Location_WKT": "POINT(-1.476 55.037)",
+   "Sensor_Centroid_Longitude": -1.476,
+   "Ground_Height_Above_Sea_Level": 46.7099990844727,
+   "Sensor_Centroid_Latitude": 55.037,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Wunderground API",
+   "Raw_ID": "2"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_GREATNORTH_PARK_PARK_&_RIDE",
+   "Location_WKT": "POINT(-1.6459751 55.0335563)",
+   "Sensor_Centroid_Longitude": -1.6459751,
+   "Ground_Height_Above_Sea_Level": 66.6999969482422,
+   "Sensor_Centroid_Latitude": 55.0335563,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "3"
+  },
+  {
+   "Sensor_Name": "PER_WUNDERGROUND_ITYNEWHI2",
+   "Location_WKT": "POINT(-1.489034 55.042614)",
+   "Sensor_Centroid_Longitude": -1.489034,
+   "Ground_Height_Above_Sea_Level": 47.2299995422363,
+   "Sensor_Centroid_Latitude": 55.042614,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Wunderground API",
+   "Raw_ID": "4"
+  },
+  {
+   "Sensor_Name": "PER_WUNDERGROUND_ISEATOND2",
+   "Location_WKT": "POINT(-1.529 55.076)",
+   "Sensor_Centroid_Longitude": -1.529,
+   "Ground_Height_Above_Sea_Level": 36.5900001525879,
+   "Sensor_Centroid_Latitude": 55.076,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Wunderground API",
+   "Raw_ID": "7"
+  },
+  {
+   "Sensor_Name": "PER_WUNDERGROUND_INORTHUM24",
+   "Location_WKT": "POINT(-1.589756 55.072472)",
+   "Sensor_Centroid_Longitude": -1.589756,
+   "Ground_Height_Above_Sea_Level": 59.1399993896484,
+   "Sensor_Centroid_Latitude": 55.072472,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Wunderground API",
+   "Raw_ID": "11"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_ELDONGARDEN_MULTI_PERCY_STREET",
+   "Location_WKT": "POINT(-1.6154009 54.9760528)",
+   "Sensor_Centroid_Longitude": -1.6154009,
+   "Ground_Height_Above_Sea_Level": 48.2299995422363,
+   "Sensor_Centroid_Latitude": 54.9760528,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "14"
+  },
+  {
+   "Sensor_Name": "PER_SCHOOL_NEWBURN MANOR",
+   "Location_WKT": "POINT(-1.7396792 54.985907)",
+   "Sensor_Centroid_Longitude": -1.7396792,
+   "Ground_Height_Above_Sea_Level": 34.439998626709,
+   "Sensor_Centroid_Latitude": 54.985907,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "School Weather station",
+   "Raw_ID": "15"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_BOURNEMOUTHGARDENS_WHITLEY_BAY_NE26_1QQ",
+   "Location_WKT": "POINT(-1.4516148 55.0496713)",
+   "Sensor_Centroid_Longitude": -1.4516148,
+   "Ground_Height_Above_Sea_Level": 12.5600004196167,
+   "Sensor_Centroid_Latitude": 55.0496713,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "18"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_CORONATIONCRESCENT_MONKSEATON_NE25_8AJ",
+   "Location_WKT": "POINT(-1.4611243 55.0412697)",
+   "Sensor_Centroid_Longitude": -1.4611243,
+   "Ground_Height_Above_Sea_Level": 36.1199989318848,
+   "Sensor_Centroid_Latitude": 55.0412697,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "19"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_ELDONSQUARE_MULTI_ELDON_SQUARE_MULTI",
+   "Location_WKT": "POINT(-1.6154009 54.9760528)",
+   "Sensor_Centroid_Longitude": -1.6154009,
+   "Ground_Height_Above_Sea_Level": 48.2299995422363,
+   "Sensor_Centroid_Latitude": 54.9760528,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "21"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_ELLISONPLACE",
+   "Location_WKT": "POINT(-1.6078427 54.9763116)",
+   "Sensor_Centroid_Longitude": -1.6078427,
+   "Ground_Height_Above_Sea_Level": 45.9199981689453,
+   "Sensor_Centroid_Latitude": 54.9763116,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "22"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_FELLINGMETRO_SUNDERLAND_ROAD_GATESHEAD_NE10_9LS",
+   "Location_WKT": "POINT(-1.5704418 54.9526046)",
+   "Sensor_Centroid_Longitude": -1.5704418,
+   "Ground_Height_Above_Sea_Level": 48.7700004577637,
+   "Sensor_Centroid_Latitude": 54.9526046,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "24"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_FOURLANE_ENDS_METRO_STATION_BENTON_ROAD_NE7_7UJ",
+   "Location_WKT": "POINT(-1.5786201 55.01013)",
+   "Sensor_Centroid_Longitude": -1.5786201,
+   "Ground_Height_Above_Sea_Level": 66.8499984741211,
+   "Sensor_Centroid_Latitude": 55.01013,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "26"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_STADIUMOF_LIGHT_METRO_STATION",
+   "Location_WKT": "POINT(-1.38292 54.91824)",
+   "Sensor_Centroid_Longitude": -1.38292,
+   "Ground_Height_Above_Sea_Level": 27.9899997711182,
+   "Sensor_Centroid_Latitude": 54.91824,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "32"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_CIVICCENTRE_(S)_SANDYFORD_ROAD",
+   "Location_WKT": "POINT(-1.609412 54.979031)",
+   "Sensor_Centroid_Longitude": -1.609412,
+   "Ground_Height_Above_Sea_Level": 46.8300018310547,
+   "Sensor_Centroid_Latitude": 54.979031,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "72"
+  },
+  {
+   "Sensor_Name": "PER_SCHOOL_RAVENSWOOD PRIMARY",
+   "Location_WKT": "POINT(-1.5773854 54.9913294)",
+   "Sensor_Centroid_Longitude": -1.5773854,
+   "Ground_Height_Above_Sea_Level": 49.4099998474121,
+   "Sensor_Centroid_Latitude": 54.9913294,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "School Weather station",
+   "Raw_ID": "91"
+  },
+  {
+   "Sensor_Name": "PER_SCHOOL_WELBECK ACADEMY",
+   "Location_WKT": "POINT(-1.5661663 54.9727002)",
+   "Sensor_Centroid_Longitude": -1.5661663,
+   "Ground_Height_Above_Sea_Level": 48.1800003051758,
+   "Sensor_Centroid_Latitude": 54.9727002,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "School Weather station",
+   "Raw_ID": "92"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_NORTHUMBERLANDPARK_METRO_STATIO_ALGERNON_DRIVE_SHIREMOOR_NE27_0SJ",
+   "Location_WKT": "POINT(-1.5199387 55.0330692)",
+   "Sensor_Centroid_Longitude": -1.5199387,
+   "Ground_Height_Above_Sea_Level": 64.1600036621094,
+   "Sensor_Centroid_Latitude": 55.0330692,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "98"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_PIPEWELLGATEGATESHEAD_NE8_2BJ",
+   "Location_WKT": "POINT(-1.6109121 54.9646382)",
+   "Sensor_Centroid_Longitude": -1.6109121,
+   "Ground_Height_Above_Sea_Level": 7.6399998664856,
+   "Sensor_Centroid_Latitude": 54.9646382,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "101"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_REGENTCENTRE_METRO_STATION_GREAT_NORTH_ROAD",
+   "Location_WKT": "POINT(-1.62204 55.01172)",
+   "Sensor_Centroid_Longitude": -1.62204,
+   "Ground_Height_Above_Sea_Level": 59.9799995422363,
+   "Sensor_Centroid_Latitude": 55.01172,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "103"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_REGENTCOURT_GATESHEAD_NE8_1EW",
+   "Location_WKT": "POINT(-1.6036127 54.9605663)",
+   "Sensor_Centroid_Longitude": -1.6036127,
+   "Ground_Height_Above_Sea_Level": 62.7000007629395,
+   "Sensor_Centroid_Latitude": 54.9605663,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "104"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_STJAMES_STREET",
+   "Location_WKT": "POINT(-1.6197779 54.9756487)",
+   "Sensor_Centroid_Longitude": -1.6197779,
+   "Ground_Height_Above_Sea_Level": 61.8600006103516,
+   "Sensor_Centroid_Latitude": 54.9756487,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "107"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_WESTWEAR_STREET_SUNDERLAND_A1018_SR1_1XD",
+   "Location_WKT": "POINT(-1.3793372 54.9089131)",
+   "Sensor_Centroid_Longitude": -1.3793372,
+   "Ground_Height_Above_Sea_Level": 25.9799995422363,
+   "Sensor_Centroid_Latitude": 54.9089131,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "109"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_WHITLEYROAD_(_HEALTH_CENTRE)_WHITLEY_BAY_NE26_2ND",
+   "Location_WKT": "POINT(-1.4398791 55.0413146)",
+   "Sensor_Centroid_Longitude": -1.4398791,
+   "Ground_Height_Above_Sea_Level": 23.8099994659424,
+   "Sensor_Centroid_Latitude": 55.0413146,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "110"
+  },
+  {
+   "Sensor_Name": "PER_SCHOOL_ST JOHN VIANNEY RC PRIMARY",
+   "Location_WKT": "POINT(-1.7092615 54.9924483)",
+   "Sensor_Centroid_Longitude": -1.7092615,
+   "Ground_Height_Above_Sea_Level": 113.449996948242,
+   "Sensor_Centroid_Latitude": 54.9924483,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "School Weather station",
+   "Raw_ID": "114"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_STMARYS_ISLAND_NORTH_THE_LINKS_WHITLEY_BAY_NE26_4RS",
+   "Location_WKT": "POINT(-1.4516639 55.0698944)",
+   "Sensor_Centroid_Longitude": -1.4516639,
+   "Ground_Height_Above_Sea_Level": 5.92000007629395,
+   "Sensor_Centroid_Latitude": 55.0698944,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "116"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_SWINBURNESTREET_GATESHEAD_NE8_1AX",
+   "Location_WKT": "POINT(-1.6031052 54.9648185)",
+   "Sensor_Centroid_Longitude": -1.6031052,
+   "Ground_Height_Above_Sea_Level": 36.5699996948242,
+   "Sensor_Centroid_Latitude": 54.9648185,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "118"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_UPPERCAMDEN_STREET_NORTH_SHIELDS_NE30_1QG",
+   "Location_WKT": "POINT(-1.4476583 55.0107122)",
+   "Sensor_Centroid_Longitude": -1.4476583,
+   "Ground_Height_Above_Sea_Level": 36.0900001525879,
+   "Sensor_Centroid_Latitude": 55.0107122,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "120"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_BEACONCENTRE_SAVILLE_STREET_NORTH_SHIELDS_NE29_6QN",
+   "Location_WKT": "POINT(-1.4477338 55.0089027)",
+   "Sensor_Centroid_Longitude": -1.4477338,
+   "Ground_Height_Above_Sea_Level": 34.1199989318848,
+   "Sensor_Centroid_Latitude": 55.0089027,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "121"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_CAULDWELLAVENUE_MONKSEATON_NE25_9RW",
+   "Location_WKT": "POINT(-1.4747613 55.0360606)",
+   "Sensor_Centroid_Longitude": -1.4747613,
+   "Ground_Height_Above_Sea_Level": 47.1500015258789,
+   "Sensor_Centroid_Latitude": 55.0360606,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "123"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_CORONATIONSTREET_WALLSEND_NE28_7RH",
+   "Location_WKT": "POINT(-1.5300794 54.992042)",
+   "Sensor_Centroid_Longitude": -1.5300794,
+   "Ground_Height_Above_Sea_Level": 26.8500003814697,
+   "Sensor_Centroid_Latitude": 54.992042,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "124"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_SANDYFORDROAD",
+   "Location_WKT": "POINT(-1.6032734 54.981056)",
+   "Sensor_Centroid_Longitude": -1.6032734,
+   "Ground_Height_Above_Sea_Level": 45.25,
+   "Sensor_Centroid_Latitude": 54.981056,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "125"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_NORFOLKSTREET_NORTH_SHIELDS_NE30_1NQ",
+   "Location_WKT": "POINT(-1.4434771 55.009324)",
+   "Sensor_Centroid_Longitude": -1.4434771,
+   "Ground_Height_Above_Sea_Level": 30.7399997711182,
+   "Sensor_Centroid_Latitude": 55.009324,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "127"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_ALEXANDRASTREET_WALLSEND_NE30_4QX",
+   "Location_WKT": "POINT(-1.5282748 54.9922348)",
+   "Sensor_Centroid_Longitude": -1.5282748,
+   "Ground_Height_Above_Sea_Level": 26.0400009155273,
+   "Sensor_Centroid_Latitude": 54.9922348,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "129"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_CHARLESSTREET_GATESHEAD_NE8_1EW",
+   "Location_WKT": "POINT(-1.6021302 54.9609535)",
+   "Sensor_Centroid_Longitude": -1.6021302,
+   "Ground_Height_Above_Sea_Level": 58.7200012207031,
+   "Sensor_Centroid_Latitude": 54.9609535,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "130"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_GATESTOWELL_STREET",
+   "Location_WKT": "POINT(-1.6202778 54.9722291)",
+   "Sensor_Centroid_Longitude": -1.6202778,
+   "Ground_Height_Above_Sea_Level": 48.6699981689453,
+   "Sensor_Centroid_Latitude": 54.9722291,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "131"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_MORDENSTREET",
+   "Location_WKT": "POINT(-1.6169043 54.9761462)",
+   "Sensor_Centroid_Longitude": -1.6169043,
+   "Ground_Height_Above_Sea_Level": 53.6599998474121,
+   "Sensor_Centroid_Latitude": 54.9761462,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "132"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_STJAMES",
+   "Location_WKT": "POINT(-1.62099 54.97408)",
+   "Sensor_Centroid_Longitude": -1.62099,
+   "Ground_Height_Above_Sea_Level": 50.75,
+   "Sensor_Centroid_Latitude": 54.97408,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "137"
+  },
+  {
+   "Sensor_Name": "PER_NEWCASTLE_TERRACEPLACE_SOUTH",
+   "Location_WKT": "POINT(-1.5474653 54.9675336)",
+   "Sensor_Centroid_Longitude": -1.5474653,
+   "Ground_Height_Above_Sea_Level": 29.7900009155273,
+   "Sensor_Centroid_Latitude": 54.9675336,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "Newcastle Council RSS feed",
+   "Raw_ID": "138"
+  }
+ ],
+ "Pagination": {
+  "Total": 1804,
+  "Limit": 10000,
+  "Offset": 0,
+  "Next": null,
+  "Previous": null
+ }
+}

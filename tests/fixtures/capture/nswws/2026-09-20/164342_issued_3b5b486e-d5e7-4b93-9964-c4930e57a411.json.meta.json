@@ -1,0 +1,12 @@
+{
+ "bytes": 42,
+ "content_type": "application/json",
+ "fetched_at": "2026-09-20T16:43:42.918098+00:00",
+ "file": "164342_issued_3b5b486e-d5e7-4b93-9964-c4930e57a411.json",
+ "n_items": 0,
+ "sha256": "ed778c73ea51338d6576fb5992b189f2b94d9f3d5e199f46c1af520d6b0b3e6c",
+ "source": "nswws",
+ "status": 200,
+ "tag": "issued_3b5b486e-d5e7-4b93-9964-c4930e57a411",
+ "url": "https://data.hub.api.metoffice.gov.uk/nswws/v1.1/objects/issued/3b5b486e-d5e7-4b93-9964-c4930e57a411"
+}

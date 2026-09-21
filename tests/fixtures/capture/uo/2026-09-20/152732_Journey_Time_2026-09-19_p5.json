@@ -1,0 +1,360 @@
+{
+ "Readings": [
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:09:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:13:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:13:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 86.0,
+   "Timestamp": "2026-09-19T05:13:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:17:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:17:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 86.0,
+   "Timestamp": "2026-09-19T05:17:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:21:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:21:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 86.0,
+   "Timestamp": "2026-09-19T05:21:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 86.0,
+   "Timestamp": "2026-09-19T05:25:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:25:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:25:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 93.0,
+   "Timestamp": "2026-09-19T05:29:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 86.0,
+   "Timestamp": "2026-09-19T05:29:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:29:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 86.0,
+   "Timestamp": "2026-09-19T05:33:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 93.0,
+   "Timestamp": "2026-09-19T05:33:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:33:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:37:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 86.0,
+   "Timestamp": "2026-09-19T05:37:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 93.0,
+   "Timestamp": "2026-09-19T05:37:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:41:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 93.0,
+   "Timestamp": "2026-09-19T05:41:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 85.0,
+   "Timestamp": "2026-09-19T05:41:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 85.0,
+   "Timestamp": "2026-09-19T05:45:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 93.0,
+   "Timestamp": "2026-09-19T05:45:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:45:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 93.0,
+   "Timestamp": "2026-09-19T05:49:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:49:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 85.0,
+   "Timestamp": "2026-09-19T05:49:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 93.0,
+   "Timestamp": "2026-09-19T05:53:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:53:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 85.0,
+   "Timestamp": "2026-09-19T05:53:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 93.0,
+   "Timestamp": "2026-09-19T05:57:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 85.0,
+   "Timestamp": "2026-09-19T05:57:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T05:57:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 92.0,
+   "Timestamp": "2026-09-19T06:01:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 93.0,
+   "Timestamp": "2026-09-19T06:01:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 121.0,
+   "Timestamp": "2026-09-19T06:01:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 94.0,
+   "Timestamp": "2026-09-19T06:05:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Variable": "Journey Time",
+   "Value": 93.0,
+   "Timestamp": "2026-09-19T06:05:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 103.0,
+   "Timestamp": "2026-09-19T06:05:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Variable": "Journey Time",
+   "Value": 85.0,
+   "Timestamp": "2026-09-19T06:09:00",
+   "Flagged": false
+  },
+  {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Variable": "Journey Time",
+   "Value": 94.0,
+   "Timestamp": "2026-09-19T06:09:00",
+   "Flagged": false
+  }
+ ],
+ "Sensors": {
+  "PER_NE_CAJT_GHA1114_CR2_HD3": {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_HD3",
+   "Location_WKT": "LINESTRING(-1.64298126471497 54.9570927506655,-1.66331026812397 54.9592714494655)",
+   "Sensor_Centroid_Longitude": -1.6531457664194702,
+   "Ground_Height_Above_Sea_Level": 3.72000002861023,
+   "Sensor_Centroid_Latitude": 54.9581821000655,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "NE Travel Data API",
+   "Raw_ID": "339"
+  },
+  "PER_NE_CAJT_GHA1114_CR2_TEAMST1": {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_CR2_TEAMST1",
+   "Location_WKT": "LINESTRING(-1.64312148375667 54.9571291070495,-1.62684218293642 54.9562804988798)",
+   "Sensor_Centroid_Longitude": -1.634981833346545,
+   "Ground_Height_Above_Sea_Level": 7.82000017166138,
+   "Sensor_Centroid_Latitude": 54.95670480296465,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "NE Travel Data API",
+   "Raw_ID": "340"
+  },
+  "PER_NE_CAJT_GHA1114_HD3_CR2": {
+   "Sensor_Name": "PER_NE_CAJT_GHA1114_HD3_CR2",
+   "Location_WKT": "LINESTRING(-1.66329450182887 54.9592893783832,-1.64312148375667 54.9571291070495)",
+   "Sensor_Centroid_Longitude": -1.65320799279277,
+   "Ground_Height_Above_Sea_Level": 3.72000002861023,
+   "Sensor_Centroid_Latitude": 54.95820924271635,
+   "Sensor_Height_Above_Ground": 2.0,
+   "Broker_Name": "NE Travel Data API",
+   "Raw_ID": "341"
+  }
+ },
+ "Start": "2026-09-19T00:00:00",
+ "End": "2026-09-19T23:59:59",
+ "Pagination": {
+  "Total": 119229,
+  "Limit": 5000,
+  "Offset": 25000,
+  "Next": "http://uoweb3.ncl.ac.uk/sensors/data/json?bbox_p1_x=-1.8&bbox_p1_y=54.9&bbox_p2_x=-1.35&bbox_p2_y=55.08&start=2026-09-19T00%3A00%3A00&end=2026-09-19T23%3A59%3A59&variables=Journey+Time&limit=5000&offset=30000",
+  "Previous": "http://uoweb3.ncl.ac.uk/sensors/data/json?bbox_p1_x=-1.8&bbox_p1_y=54.9&bbox_p2_x=-1.35&bbox_p2_y=55.08&start=2026-09-19T00%3A00%3A00&end=2026-09-19T23%3A59%3A59&variables=Journey+Time&limit=5000&offset=20000"
+ }
+}

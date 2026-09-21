@@ -1,0 +1,15 @@
+{
+ "bytes": 4913,
+ "content_type": "application/json",
+ "fetched_at": "2026-09-20T15:28:47.523576+00:00",
+ "file": "152847_readings_rainfall_021028.json",
+ "n_items": 11,
+ "parameter": "rainfall",
+ "sha256": "48bc9c0719a523a4dd2ee733af0c5b141f17cb4f1ade233d560a57105a72af56",
+ "since": "2026-09-20T12:28:43Z",
+ "source": "ea",
+ "station": "021028",
+ "status": 200,
+ "tag": "readings_rainfall_021028",
+ "url": "https://environment.data.gov.uk/flood-monitoring/id/stations/021028/readings?since=2026-09-20T12%3A28%3A43Z&_sorted=&_limit=500"
+}

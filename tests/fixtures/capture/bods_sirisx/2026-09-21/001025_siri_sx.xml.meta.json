@@ -1,0 +1,12 @@
+{
+ "bytes": 4551927,
+ "content_type": "text/xml",
+ "fetched_at": "2026-09-21T00:10:25.745749+00:00",
+ "file": "001025_siri_sx.xml",
+ "n_items": 355,
+ "sha256": "8163caa00373c2684d93c5b463d9abbe62d79a38c7d64959e2fa9ed92640e19e",
+ "source": "bods_sirisx",
+ "status": 200,
+ "tag": "siri_sx",
+ "url": "https://data.bus-data.dft.gov.uk/api/v1/siri-sx/"
+}

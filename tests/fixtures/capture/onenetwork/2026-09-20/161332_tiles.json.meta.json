@@ -1,0 +1,10 @@
+{
+ "bytes": 3482810,
+ "fetched_at": "2026-09-20T16:13:32.302265+00:00",
+ "file": "161332_tiles.json",
+ "n_items": 3759,
+ "note": "one.network vector tiles, raw properties",
+ "sha256": "4bdd2af58f7747cad15a59631d5a6869fe9cc9d2ff0299905179bfa69c452546",
+ "source": "onenetwork",
+ "tag": "tiles"
+}

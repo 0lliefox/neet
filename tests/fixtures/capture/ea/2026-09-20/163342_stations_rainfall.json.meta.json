@@ -1,0 +1,12 @@
+{
+ "bytes": 6196,
+ "content_type": "application/json",
+ "fetched_at": "2026-09-20T16:33:42.334467+00:00",
+ "file": "163342_stations_rainfall.json",
+ "n_items": 8,
+ "sha256": "24720d032697d5549ecdc1020746ca9831a86a0cde3c9886eced3bdf2d5dcce0",
+ "source": "ea",
+ "status": 200,
+ "tag": "stations_rainfall",
+ "url": "https://environment.data.gov.uk/flood-monitoring/id/stations?parameter=rainfall&lat=54.9781&long=-1.6162&dist=15"
+}
