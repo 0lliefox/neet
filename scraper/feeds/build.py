@@ -135,10 +135,34 @@ def report(records: list[EvidenceRecord]) -> str:
     return "\n".join(lines)
 
 
+def pilot(records: list[EvidenceRecord]) -> str:
+    """Bluesky pilot gate (WS1 brief §5): relevant posts per month (place_ok and at least one topic hit),
+    by capture strategy, plus FixMyStreet reports per month — the numbers that decide the natural-claim slice."""
+    lines = []
+    posts = [r for r in records if r.source == "bluesky"]
+    rel = [r for r in posts if r.structured.get("place_ok") and any((r.structured.get("topic_hits") or {}).values())]
+    by_month: dict[str, Counter] = defaultdict(Counter)
+    for r in rel:
+        m = (r.valid_from or "")[:7]
+        for strat in (r.structured.get("strategies") or ["?"]):
+            by_month[m][str(strat)[:7]] += 1
+        by_month[m]["_total"] += 1
+        by_month[m][f"dom:{r.domain}"] += 1
+    lines.append(f"bluesky: {len(posts)} posts captured, {len(rel)} relevant (place_ok and topic)")
+    for m in sorted(by_month):
+        c = by_month[m]
+        strats = ", ".join(f"{k}:{v}" for k, v in sorted(c.items()) if not k.startswith(("_", "dom:")))
+        doms = ", ".join(f"{k[4:]}:{v}" for k, v in sorted(c.items()) if k.startswith("dom:"))
+        lines.append(f"  {m}: {c['_total']} relevant  [{strats}]  domains {doms}")
+    fms = Counter((r.valid_from or "")[:7] for r in records if r.source == "fixmystreet")
+    lines.append("fixmystreet reports per month: " + (", ".join(f"{m}:{n}" for m, n in sorted(fms.items())) or "none"))
+    return "\n".join(lines)
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     ap = argparse.ArgumentParser(prog="neet feeds")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("build", "report"):
+    for name in ("build", "report", "pilot"):
         p = sub.add_parser(name)
         p.add_argument("--root", default=os.environ.get("NEET_DATA_ROOT", "data"))
         p.add_argument("--since")
@@ -152,7 +176,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     if a.cmd == "build":
         n = write_jsonl(recs, Path(a.out))
         print(f"wrote {n} records to {a.out}")
-    print(report(recs))
+    print(pilot(recs) if a.cmd == "pilot" else report(recs))
     if errors:
         print(f"{len(errors)} payload(s) skipped:", file=sys.stderr)
         for e in errors[:20]:
