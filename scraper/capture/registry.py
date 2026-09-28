@@ -20,10 +20,11 @@ def all_sources(cfg: dict[str, Any]) -> list[CaptureSource]:
     from .sources.bluesky import BlueskySource
     from .sources.travel_updates import TravelUpdatesSource
     from .sources.fixmystreet import FixMyStreetSource
+    from .sources.reddit import RedditSource
 
     classes = [RSSSource, NSWWSSource, MetOfficeHourlySource, BODSSource, EASource, EAArchiveSource, UOSource,
                PoliceMonthlySource, StreetManagerArchiveSource, OneNetworkSource, BlueskySource, TravelUpdatesSource,
-               FixMyStreetSource]
+               FixMyStreetSource, RedditSource]
     scfg = (cfg.get("sources") or {})
     out = []
     for cls in classes:
