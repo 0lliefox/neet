@@ -127,10 +127,10 @@ def test_metoffice_hourly_tags_one_payload_per_point(tmp_path):
     from scraper.capture.sources.metoffice_hourly import MetOfficeHourlySource
     sess = _FakeSession(lambda url, p: (200, b'{"features": []}'))
     src = MetOfficeHourlySource({"points": [{"lat": 54.9781, "lng": -1.6162, "name": "newcastle"},
-                                            {"lat": 51.2362, "lng": -0.5704, "name": "guildford"}]})
+                                            {"lat": 54.7765, "lng": -1.5757, "name": "durham"}]})
     out = src.fetch(_ctx(tmp_path, "metoffice_hourly", sess, {"METOFFICE_DATAHUB_KEY": "k"}))
-    assert [p.tag for p in out] == ["hourly_newcastle", "hourly_guildford"]
-    assert [c[1]["latitude"] for c in sess.calls] == [54.9781, 51.2362]
+    assert [p.tag for p in out] == ["hourly_newcastle", "hourly_durham"]
+    assert [c[1]["latitude"] for c in sess.calls] == [54.9781, 54.7765]
 
 
 def test_metoffice_hourly_without_points_keeps_the_newcastle_tag(tmp_path):
@@ -150,20 +150,20 @@ def test_police_tracks_done_months_per_point(tmp_path, monkeypatch):
     published = {"2026-08": b'[{"id": 1}]', "2026-07": b'[{"id": 2}]', "2026-09": b"[]"}
     sess = _FakeSession(lambda url, p: (200, published[p["date"]]) if p["date"] in published else (404, b""))
     newcastle = {"lat": 54.9781, "lng": -1.6162, "name": "newcastle_centre"}
-    guildford = {"lat": 51.2362, "lng": -0.5704, "name": "guildford"}
+    durham = {"lat": 54.7765, "lng": -1.5757, "name": "durham"}
     ctx = _ctx(tmp_path, "police", sess)
     fast = {"pause_s": 0, "retry_s": 0}
     pm.PoliceMonthlySource({"points": [newcastle], **fast}).fetch(ctx)
     assert ctx.state.get("months_done_by_point") == {"newcastle_centre": ["2026-07", "2026-08"]}
     # Adding a point later backfills the months Newcastle already has, and re-asks Newcastle only for Sep and Jun.
     sess.calls.clear()
-    out = pm.PoliceMonthlySource({"points": [newcastle, guildford], **fast}).fetch(ctx)
+    out = pm.PoliceMonthlySource({"points": [newcastle, durham], **fast}).fetch(ctx)
     asked = sorted((c[1]["lat"], c[1]["date"]) for c in sess.calls)
     assert asked == sorted([(54.9781, "2026-09"), (54.9781, "2026-06"),
-                            (51.2362, "2026-09"), (51.2362, "2026-08"), (51.2362, "2026-07"), (51.2362, "2026-06")])
-    assert {p.tag for p in out} >= {"guildford_2026-08", "guildford_2026-07"}
+                            (54.7765, "2026-09"), (54.7765, "2026-08"), (54.7765, "2026-07"), (54.7765, "2026-06")])
+    assert {p.tag for p in out} >= {"durham_2026-08", "durham_2026-07"}
     assert ctx.state.get("months_done_by_point") == {"newcastle_centre": ["2026-07", "2026-08"],
-                                                     "guildford": ["2026-07", "2026-08"]}
+                                                     "durham": ["2026-07", "2026-08"]}
 
 
 def test_police_retries_a_rate_limited_request(tmp_path, monkeypatch):
