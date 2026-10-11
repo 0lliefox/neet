@@ -99,3 +99,67 @@ def test_parse_travel_updates_fixture():
     assert ups[0]["title"].startswith("Fellgate lift") and ups[0]["effective_from"] == "18 Sep 2026, 08:30" and ups[0]["mode_guess"] == "metro"
     assert ups[0]["last_updated"] == "18 Sep 2026, 08:30" and "platform 1" in ups[0]["body"]
     assert ups[1]["hidden"] is True and ups[1]["effective_until"] == "25 Sep 2026, 06:00" and ups[1]["mode_guess"] == "bus"
+
+
+class _FakeSession:
+    """Records GET calls and answers each from `reply(url, params) -> (status, body)`."""
+
+    def __init__(self, reply):
+        self.reply, self.calls = reply, []
+
+    def get(self, url, params=None, headers=None, timeout=None):
+        import requests
+        self.calls.append((url, dict(params or {})))
+        status, body = self.reply(url, params or {})
+        r = requests.Response()
+        r.status_code, r._content, r.url = status, body, url
+        r.headers["Content-Type"] = "application/json"
+        return r
+
+
+def _ctx(tmp_path, source, session, env=None):
+    from scraper.capture.base import Context
+    st = Store(tmp_path)
+    return Context(store=st, state=State(st.state_dir, source), config={}, env=env or {}, session=session)
+
+
+def test_metoffice_hourly_tags_one_payload_per_point(tmp_path):
+    from scraper.capture.sources.metoffice_hourly import MetOfficeHourlySource
+    sess = _FakeSession(lambda url, p: (200, b'{"features": []}'))
+    src = MetOfficeHourlySource({"points": [{"lat": 54.9781, "lng": -1.6162, "name": "newcastle"},
+                                            {"lat": 51.2362, "lng": -0.5704, "name": "guildford"}]})
+    out = src.fetch(_ctx(tmp_path, "metoffice_hourly", sess, {"METOFFICE_DATAHUB_KEY": "k"}))
+    assert [p.tag for p in out] == ["hourly_newcastle", "hourly_guildford"]
+    assert [c[1]["latitude"] for c in sess.calls] == [54.9781, 51.2362]
+
+
+def test_metoffice_hourly_without_points_keeps_the_newcastle_tag(tmp_path):
+    from scraper.capture.sources.metoffice_hourly import MetOfficeHourlySource
+    sess = _FakeSession(lambda url, p: (200, b'{"features": []}'))
+    out = MetOfficeHourlySource({"latitude": 54.9781, "longitude": -1.6162}).fetch(
+        _ctx(tmp_path, "metoffice_hourly", sess, {"METOFFICE_DATAHUB_KEY": "k"}))
+    assert [p.tag for p in out] == ["hourly_newcastle"]
+    assert sess.calls[0][1]["latitude"] == 54.9781 and sess.calls[0][1]["longitude"] == -1.6162
+
+
+def test_police_tracks_done_months_per_point(tmp_path, monkeypatch):
+    from datetime import datetime, timezone
+    import scraper.capture.sources.police_monthly as pm
+    monkeypatch.setattr(pm, "utcnow", lambda: datetime(2026, 10, 11, tzinfo=timezone.utc))
+    # Aug and Jul are published; Sep is not yet (empty list); Jun is a 404.
+    published = {"2026-08": b'[{"id": 1}]', "2026-07": b'[{"id": 2}]', "2026-09": b"[]"}
+    sess = _FakeSession(lambda url, p: (200, published[p["date"]]) if p["date"] in published else (404, b""))
+    newcastle = {"lat": 54.9781, "lng": -1.6162, "name": "newcastle_centre"}
+    guildford = {"lat": 51.2362, "lng": -0.5704, "name": "guildford"}
+    ctx = _ctx(tmp_path, "police", sess)
+    pm.PoliceMonthlySource({"points": [newcastle]}).fetch(ctx)
+    assert ctx.state.get("months_done_by_point") == {"newcastle_centre": ["2026-07", "2026-08"]}
+    # Adding a point later backfills the months Newcastle already has, and re-asks Newcastle only for Sep and Jun.
+    sess.calls.clear()
+    out = pm.PoliceMonthlySource({"points": [newcastle, guildford]}).fetch(ctx)
+    asked = sorted((c[1]["lat"], c[1]["date"]) for c in sess.calls)
+    assert asked == sorted([(54.9781, "2026-09"), (54.9781, "2026-06"),
+                            (51.2362, "2026-09"), (51.2362, "2026-08"), (51.2362, "2026-07"), (51.2362, "2026-06")])
+    assert {p.tag for p in out} >= {"guildford_2026-08", "guildford_2026-07"}
+    assert ctx.state.get("months_done_by_point") == {"newcastle_centre": ["2026-07", "2026-08"],
+                                                     "guildford": ["2026-07", "2026-08"]}
