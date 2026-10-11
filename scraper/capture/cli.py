@@ -108,20 +108,29 @@ def main(argv: list[str] | None = None) -> int:
             n_items = 0
             statuses = []
             n_written = n_unchanged = 0
+            write_errors: list[str] = []
             for p in payloads:
                 if p is None:
                     continue
-                if store.write(src.name, p) is None:
-                    n_unchanged += 1
-                else:
-                    n_written += 1
+                try:  # one payload that cannot be written must not lose the rest of the run
+                    if store.write(src.name, p) is None:
+                        n_unchanged += 1
+                    else:
+                        n_written += 1
+                except OSError as exc:
+                    logger.exception("source %s: could not write payload %s", src.name, p.tag)
+                    write_errors.append(f"{p.tag}: {type(exc).__name__}: {exc}"[:200])
+                    continue
                 n_items += p.n_items or 0
                 statuses.append(p.meta.get("status"))
-            ok = all((s is None) or (200 <= int(s) < 300) for s in statuses) if statuses else True
+            ok = (all((s is None) or (200 <= int(s) < 300) for s in statuses) if statuses else True) and not write_errors
             state.mark_run(ok=ok); state.save()
-            store.health({"source": src.name, "ok": ok, "n_payloads": len(payloads), "n_written": n_written,
-                          "n_unchanged": n_unchanged, "n_items": n_items,
-                          "duration_s": round(time.time() - t0, 1), "statuses": statuses[:20]})
+            rec = {"source": src.name, "ok": ok, "n_payloads": len(payloads), "n_written": n_written,
+                   "n_unchanged": n_unchanged, "n_items": n_items,
+                   "duration_s": round(time.time() - t0, 1), "statuses": statuses[:20]}
+            if write_errors:
+                rec.update({"n_write_errors": len(write_errors), "write_errors": write_errors[:3]})
+            store.health(rec)
             n_ok += 1
         except Exception as exc:
             logger.exception("source %s failed", src.name)

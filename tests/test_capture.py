@@ -176,3 +176,58 @@ def test_police_retries_a_rate_limited_request(tmp_path, monkeypatch):
     out = pm.PoliceMonthlySource({"points": [{"lat": 1, "lng": 2, "name": "x"}], "pause_s": 0, "retry_s": 0}).fetch(ctx)
     assert [(p.tag, p.meta["status"]) for p in out] == [("x_2026-08", 200)]
     assert ctx.state.get("months_done_by_point") == {"x": ["2026-08"]}
+
+
+def test_store_treats_an_unreadable_hash_file_as_changed(tmp_path, monkeypatch):
+    # Google Drive for desktop can refuse a read with EDEADLK ("Resource deadlock avoided").
+    import errno, pathlib
+    st = Store(tmp_path)
+    assert st.write("ea", Payload(tag="floods_x", body=b"{}")) is not None
+    real = pathlib.Path.read_text
+
+    def flaky(self, *a, **k):
+        if self.suffix == ".sha256":
+            raise OSError(errno.EDEADLK, "Resource deadlock avoided")
+        return real(self, *a, **k)
+
+    monkeypatch.setattr(pathlib.Path, "read_text", flaky)
+    assert st.unchanged("ea", Payload(tag="floods_x", body=b"{}")) is False
+    assert st.write("ea", Payload(tag="floods_x", body=b"{}")) is not None   # written again, not raised
+    monkeypatch.setattr(pathlib.Path, "read_text", real)
+    assert st.write("ea", Payload(tag="floods_x", body=b"{}")) is None       # hash file rewritten and readable
+
+
+def test_capture_run_survives_one_unwritable_payload(tmp_path, monkeypatch):
+    import scraper.capture.cli as cli
+    from scraper.capture.base import CaptureSource
+
+    class Two(CaptureSource):
+        name = "two"
+
+        def fetch(self, ctx):
+            return [Payload(tag="bad", body=b"1", meta={"status": 200}), Payload(tag="good", body=b"2", meta={"status": 200})]
+
+    real_write = Store.write
+
+    def write(self, source, payload, *a, **k):
+        if payload.tag == "bad":
+            raise OSError(11, "Resource deadlock avoided")
+        return real_write(self, source, payload, *a, **k)
+
+    monkeypatch.setattr(cli, "all_sources", lambda cfg: [Two({})])
+    monkeypatch.setattr(Store, "write", write)
+    assert cli.main(["--data-root", str(tmp_path), "--force"]) == 0
+    rec = Store(tmp_path).last_health()["two"]
+    assert rec["ok"] is False and rec["n_written"] == 1 and rec["n_write_errors"] == 1
+    assert list((tmp_path / "capture" / "two").glob("*/*_good.json"))
+
+
+def test_uo_stops_after_consecutive_gateway_errors(tmp_path):
+    from scraper.capture.sources.uo import UOSource
+    sess = _FakeSession(lambda url, p: (504, b"<html>504</html>"))
+    ctx = _ctx(tmp_path, "uo", sess)
+    ctx.state.set("inventory_at", "2999-01-01T00:00:00+00:00")   # inventory not due
+    src = UOSource({"variables": ["A", "B", "C", "D", "E"], "lookback_days": 2, "max_consecutive_gateway_errors": 3})
+    out = src.fetch(ctx)
+    assert len(sess.calls) == 3 and len(out) == 3
+    assert all(v == [] for v in ctx.state.get("days_done").values())

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 import tempfile
@@ -72,10 +73,20 @@ class Store:
     def _last_hash_path(self, source: str, tag: str) -> Path:
         return self.state_dir / "_hashes" / _safe(source) / (_safe(tag) + ".sha256")
 
+    @staticmethod
+    def _read_hash(hp: Path) -> str | None:
+        """The stored digest, or None if there is none or it cannot be read. Google Drive for desktop can refuse
+        to read a file it holds in a bad sync state (OSError EDEADLK, "Resource deadlock avoided"); treating that
+        as "changed" costs at most one duplicate payload, and the rewrite below replaces the stuck file."""
+        try:
+            return hp.read_text().strip() if hp.exists() else None
+        except OSError as exc:
+            logging.getLogger("neet.capture").warning("unreadable hash file %s (%s); treating payload as changed", hp, exc)
+            return None
+
     def unchanged(self, source: str, payload: Payload) -> bool:
         """True if this (source, tag) payload has exactly the same content as the last one stored."""
-        p = self._last_hash_path(source, payload.tag)
-        return p.exists() and p.read_text().strip() == hashlib.sha256(payload.body).hexdigest()
+        return self._read_hash(self._last_hash_path(source, payload.tag)) == hashlib.sha256(payload.body).hexdigest()
 
     def write(self, source: str, payload: Payload, when: datetime | None = None, skip_unchanged: bool = True) -> Path | None:
         """Persist a payload. With skip_unchanged, an identical repeat of the previous payload for the same
@@ -83,7 +94,7 @@ class Store:
         when = when or utcnow()
         digest = hashlib.sha256(payload.body).hexdigest()
         hp = self._last_hash_path(source, payload.tag)
-        if skip_unchanged and hp.exists() and hp.read_text().strip() == digest:
+        if skip_unchanged and self._read_hash(hp) == digest:
             return None
         day = when.strftime("%Y-%m-%d")
         stamp = when.strftime("%H%M%S")

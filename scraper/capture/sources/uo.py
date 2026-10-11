@@ -30,12 +30,20 @@ class UOSource(CaptureSource):
         # daily backfill of previous days not yet done, per variable
         done: dict[str, list[str]] = ctx.state.get("days_done", {})
         today = utcnow().date()
+        # When the API itself is down (every call a 504 after ~60 s, as from 30 Sep 2026), stop after a few
+        # consecutive gateway errors instead of holding the lock for ~19 minutes; undone days retry next run.
+        max_gateway_errors = int(self.cfg.get("max_consecutive_gateway_errors", 3))
+        gateway_errors = 0
         for var in self.cfg.get("variables", DEFAULT_VARIABLES):
+            if gateway_errors >= max_gateway_errors:
+                break
             days = done.setdefault(var, [])
             for back in range(1, self.cfg.get("lookback_days", 2) + 1):
                 day = (today - timedelta(days=back)).isoformat()
                 if day in days:
                     continue
+                if gateway_errors >= max_gateway_errors:
+                    break
                 ok_all = True
                 offset, limit, page = 0, 5000, 0
                 while True:
@@ -51,7 +59,9 @@ class UOSource(CaptureSource):
                                                           extra_meta={"variable": var, "day": day, "offset": offset}))
                     if not r.ok:
                         ok_all = False
+                        gateway_errors = gateway_errors + 1 if r.status_code in (502, 503, 504) else 0
                         break
+                    gateway_errors = 0
                     if n is None or n < limit:
                         break
                     offset += limit
