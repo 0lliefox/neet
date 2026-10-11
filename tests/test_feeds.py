@@ -103,7 +103,7 @@ class HelperTests(unittest.TestCase):
 class AdapterGoldenTests(unittest.TestCase):
     def test_every_source_has_an_adapter(self):
         self.assertEqual(set(adapters()), {"rss", "police", "ea", "onenetwork", "bluesky", "travel_updates", "metoffice_hourly",
-                                           "bods_sirisx", "uo", "nswws", "streetmanager_archive", "fixmystreet", "reddit"})
+                                           "bods_sirisx", "uo", "nswws", "streetmanager_archive", "fixmystreet"})
 
     def test_rss(self):
         recs = records_for("rss")

@@ -227,5 +227,3 @@ capture:
     bluesky: {cadence_s: 1800, s3_max_authors: 600}
     travel_updates: {cadence_s: 3600}
     fixmystreet: {cadence_s: 21600, lookback_days: 7, bodies: {newcastle: 2529}}   # other Tyne and Wear body ids to be confirmed
-    reddit: {cadence_s: 3600, max_pages: 2, backfill_pages: 10, max_comment_threads: 25,   # official Data API, app-only OAuth
-             subreddits: [NewcastleUponTyne, Sunderland, Gateshead, northumberland, NorthEastEngland]}   # to be confirmed by the author
