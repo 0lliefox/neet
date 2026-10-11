@@ -152,14 +152,27 @@ def test_police_tracks_done_months_per_point(tmp_path, monkeypatch):
     newcastle = {"lat": 54.9781, "lng": -1.6162, "name": "newcastle_centre"}
     guildford = {"lat": 51.2362, "lng": -0.5704, "name": "guildford"}
     ctx = _ctx(tmp_path, "police", sess)
-    pm.PoliceMonthlySource({"points": [newcastle]}).fetch(ctx)
+    fast = {"pause_s": 0, "retry_s": 0}
+    pm.PoliceMonthlySource({"points": [newcastle], **fast}).fetch(ctx)
     assert ctx.state.get("months_done_by_point") == {"newcastle_centre": ["2026-07", "2026-08"]}
     # Adding a point later backfills the months Newcastle already has, and re-asks Newcastle only for Sep and Jun.
     sess.calls.clear()
-    out = pm.PoliceMonthlySource({"points": [newcastle, guildford]}).fetch(ctx)
+    out = pm.PoliceMonthlySource({"points": [newcastle, guildford], **fast}).fetch(ctx)
     asked = sorted((c[1]["lat"], c[1]["date"]) for c in sess.calls)
     assert asked == sorted([(54.9781, "2026-09"), (54.9781, "2026-06"),
                             (51.2362, "2026-09"), (51.2362, "2026-08"), (51.2362, "2026-07"), (51.2362, "2026-06")])
     assert {p.tag for p in out} >= {"guildford_2026-08", "guildford_2026-07"}
     assert ctx.state.get("months_done_by_point") == {"newcastle_centre": ["2026-07", "2026-08"],
                                                      "guildford": ["2026-07", "2026-08"]}
+
+
+def test_police_retries_a_rate_limited_request(tmp_path, monkeypatch):
+    from datetime import datetime, timezone
+    import scraper.capture.sources.police_monthly as pm
+    monkeypatch.setattr(pm, "utcnow", lambda: datetime(2026, 10, 11, tzinfo=timezone.utc))
+    answers = {"2026-08": [(429, b""), (429, b""), (200, b'[{"id": 1}]')]}
+    sess = _FakeSession(lambda url, p: answers[p["date"]].pop(0) if p["date"] in answers else (404, b""))
+    ctx = _ctx(tmp_path, "police", sess)
+    out = pm.PoliceMonthlySource({"points": [{"lat": 1, "lng": 2, "name": "x"}], "pause_s": 0, "retry_s": 0}).fetch(ctx)
+    assert [(p.tag, p.meta["status"]) for p in out] == [("x_2026-08", 200)]
+    assert ctx.state.get("months_done_by_point") == {"x": ["2026-08"]}
