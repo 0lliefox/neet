@@ -231,3 +231,99 @@ def test_uo_stops_after_consecutive_gateway_errors(tmp_path):
     out = src.fetch(ctx)
     assert len(sess.calls) == 3 and len(out) == 3
     assert all(v == [] for v in ctx.state.get("days_done").values())
+
+
+def test_state_retries_failed_runs_sooner_with_backoff(tmp_path: Path):
+    from datetime import datetime, timedelta, timezone
+    t0 = datetime(2026, 10, 1, tzinfo=timezone.utc)
+    s = State(tmp_path, "daily")
+    s.mark_run(now=t0, ok=True)
+    assert not s.due(86400, now=t0 + timedelta(hours=23))
+    s.mark_run(now=t0, ok=False)
+    assert s.fail_streak() == 1
+    assert not s.due(86400, now=t0 + timedelta(seconds=500))
+    assert s.due(86400, now=t0 + timedelta(seconds=540))
+    s.mark_run(now=t0, ok=False)
+    assert s.fail_streak() == 2
+    assert not s.due(86400, now=t0 + timedelta(seconds=1000)) and s.due(86400, now=t0 + timedelta(seconds=1080))
+    for _ in range(20):
+        s.mark_run(now=t0, ok=False)
+    assert not s.due(86400, now=t0 + timedelta(hours=23)) and s.due(86400, now=t0 + timedelta(hours=24))
+    s.mark_run(now=t0, ok=True)
+    assert s.fail_streak() == 0 and not s.due(86400, now=t0 + timedelta(hours=1))
+
+
+def test_state_written_before_streaks_counts_last_failure(tmp_path: Path):
+    (tmp_path / "old.json").write_text(json.dumps({"last_run": "2026-10-01T12:00:00+00:00",
+                                                    "last_success": "2026-09-30T12:00:00+00:00"}))
+    s = State(tmp_path, "old")
+    assert s.fail_streak() == 1
+    s.mark_run(ok=False)
+    assert s.fail_streak() == 2
+
+
+def _rec(at, source="ea", **kw):
+    return {"at": at, "source": source, **kw}
+
+
+def test_outages_span_network_failures_and_ignore_empty_oks():
+    from scraper.capture.report import outages
+    dns = "ConnectionError: ... (Caused by NameResolutionError(\"HTTPSConnection(host='x', port=443): Failed to resolve\"))"
+    recs = [_rec("2026-10-16T18:00:00+00:00", ok=True, n_items=5, statuses=[200]),
+            _rec("2026-10-16T18:10:00+00:00", ok=False, error=dns),
+            _rec("2026-10-16T18:20:00+00:00", source="onenetwork", ok=True, n_items=0, statuses=[None]),
+            _rec("2026-10-16T19:00:00+00:00", source="_run", ok=False, network="down"),
+            _rec("2026-10-16T19:30:00+00:00", ok=False, error=dns),
+            _rec("2026-10-16T19:40:00+00:00", ok=True, n_items=3, statuses=[200]),
+            _rec("2026-10-16T20:00:00+00:00", ok=False, error=dns)]  # too short to count
+    spans = outages(recs)
+    assert len(spans) == 1
+    a, b, ongoing = spans[0]
+    assert a.hour == 18 and a.minute == 10 and b.hour == 19 and b.minute == 40 and not ongoing
+
+
+def test_report_flags_stale_sources_and_says_all_good(tmp_path: Path):
+    from datetime import datetime, timedelta, timezone
+    from scraper.capture.base import CaptureSource
+    from scraper.capture.report import build_report
+
+    class Src(CaptureSource):
+        def __init__(self, name, cadence):
+            super().__init__({"cadence_s": cadence}); self.name = name
+
+    now = datetime(2026, 10, 20, 12, tzinfo=timezone.utc)
+    st = Store(tmp_path)
+    fresh, old = State(st.state_dir, "fresh"), State(st.state_dir, "old")
+    fresh.mark_run(now=now - timedelta(minutes=5)); fresh.save()
+    old.mark_run(now=now - timedelta(days=3)); old.mark_run(now=now - timedelta(minutes=5), ok=False); old.save()
+    st.health({"source": "_run", "ok": True, "network": "ok"})
+    st.health({"source": "old", "ok": False, "error": "ConnectionError: (Caused by NameResolutionError(\"host='data.police.uk'\"))"})
+    rep = build_report(st, [Src("fresh", 3600), Src("old", 86400)], now=datetime.now(timezone.utc))
+    assert "1 PROBLEM: old" in rep and "DNS lookup failed (data.police.uk)" in rep
+    rep = build_report(st, [Src("fresh", 3600)], now=datetime.now(timezone.utc))
+    assert "ALL GOOD" in rep
+
+
+def test_capture_skips_run_when_network_down(tmp_path: Path, monkeypatch):
+    from scraper.capture import cli
+    monkeypatch.setattr(cli, "_network_problem", lambda hosts: "www.gov.uk: no route")
+    monkeypatch.setattr(cli, "notify", lambda *a: None)
+    assert cli.main(["--data-root", str(tmp_path)]) == 0
+    st = Store(tmp_path)
+    assert st.last_health()["_run"]["network"] == "down"
+    assert not [p for p in st.state_dir.glob("*.json") if not p.name.startswith("_")]  # no source schedule touched
+    assert (st.logs_dir / "STATUS.txt").read_text().startswith("NEET capture status")
+
+
+def test_capture_does_not_create_missing_drive_folder(tmp_path: Path, monkeypatch):
+    from scraper.capture import cli
+    monkeypatch.setattr(cli, "NO_ROOT_MARKER", tmp_path / "marker")
+    sent = []
+    monkeypatch.setattr(cli, "notify", lambda *a: sent.append(a))
+    root = tmp_path / "GoogleDrive" / "My Drive" / "Data"
+    assert cli.main(["--data-root", str(root)]) == 1
+    assert not root.parent.exists() and not sent        # first miss: maybe Drive is still mounting
+    assert cli.main(["--data-root", str(root)]) == 1
+    assert len(sent) == 1                               # still missing ten minutes later: tell the user once
+    cli.main(["--data-root", str(root)])
+    assert len(sent) == 1
