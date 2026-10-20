@@ -23,5 +23,8 @@ class OneNetworkSource(CaptureSource):
             feats = [i.__dict__ for i in items]
         else:
             feats = fetch_raw()
+        if not feats:
+            # the tile loop skips tiles it cannot fetch, so an outage looks like an empty map; a real day has ~4000
+            raise RuntimeError("no features from any tile (network or one.network down?)")
         body = json.dumps({"features": feats}, ensure_ascii=False).encode("utf-8")
         return [Payload(tag="tiles", body=body, ext="json", meta={"note": "one.network vector tiles, raw properties"}, n_items=len(feats))]
