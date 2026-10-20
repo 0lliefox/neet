@@ -371,3 +371,30 @@ def test_police_recaptures_durham_months_once_after_the_tag(tmp_path, monkeypatc
     sess.calls.clear()
     assert pm.PoliceMonthlySource(cfg).fetch(ctx) == []     # once only: published months are not asked again
     assert not [c for c in sess.calls if c[1]["date"] in published]
+
+
+def test_compressed_payload_round_trips_and_still_dedups(tmp_path: Path):
+    from scraper.capture.store import read_payload
+    st = Store(tmp_path)
+    body = b"<Siri>" + b"<PtSituationElement/>" * 500 + b"</Siri>"
+    p = st.write("bods_sirisx", Payload(tag="siri_sx", body=body, ext="xml", meta={"status": 200}, compress=True))
+    assert p.name.endswith(".xml.gz") and p.stat().st_size < len(body)
+    assert read_payload(p) == body
+    meta = json.loads((p.parent / (p.name + ".meta.json")).read_text())
+    assert meta["content_encoding"] == "gzip" and meta["bytes"] == len(body) and meta["file"] == p.name
+    assert st.write("bods_sirisx", Payload(tag="siri_sx", body=body, ext="xml", compress=True)) is None
+
+
+def test_feeds_build_reads_compressed_bods_payloads(tmp_path: Path):
+    import glob
+    from scraper.feeds.build import build_records
+    fx = Path(__file__).parent / "fixtures" / "capture" / "bods_sirisx"
+    xml = Path(glob.glob(str(fx / "*" / "*_siri_sx.xml"))[0])
+    meta = json.loads(Path(str(xml) + ".meta.json").read_text())
+    plain, packed = tmp_path / "plain", tmp_path / "packed"
+    for root, compress in ((plain, False), (packed, True)):
+        Store(root).write("bods_sirisx", Payload(tag="siri_sx", body=xml.read_bytes(), ext="xml",
+                                                 meta={k: meta[k] for k in ("url", "status") if k in meta}, compress=compress))
+    a = [r.record_id for r in build_records(plain, {"bods_sirisx"})]
+    b = [r.record_id for r in build_records(packed, {"bods_sirisx"})]
+    assert a and a == b

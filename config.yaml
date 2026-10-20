@@ -214,7 +214,7 @@ capture:
     nswws: {cadence_s: 1800}
     metoffice_hourly: {cadence_s: 3600, kinds: [hourly],   # tag = <kind>_<name>; 2 points hourly = 48 calls/day (free tier 360)
                        points: [{lat: 54.9781, lng: -1.6162, name: newcastle}, {lat: 54.7765, lng: -1.5757, name: durham}]}
-    bods_sirisx: {cadence_s: 600}
+    bods_sirisx: {cadence_s: 600, compress: true}   # the national feed, ~5.8 MB of XML every fetch; gzip is ~19x smaller
     ea: {cadence_s: 3600, latitude: 54.9781, longitude: -1.6162, dist_km: 15, counties: ["Tyne and Wear", "Northumberland", "Durham"]}
     ea_archive: {cadence_s: 21600, lookback_days: 3}
     uo:

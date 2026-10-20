@@ -211,6 +211,7 @@ def main(argv: list[str] | None = None) -> int:
             for p in payloads:
                 if p is None:
                     continue
+                p.compress = p.compress or bool(src.cfg.get("compress"))
                 try:  # one payload that cannot be written must not lose the rest of the run
                     if store.write(src.name, p, skip_unchanged=not p.keep_duplicate) is None:
                         n_unchanged += 1

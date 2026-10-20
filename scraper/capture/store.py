@@ -2,7 +2,7 @@
 
 Layout under ``data_root``::
 
-    capture/<source>/<YYYY-MM-DD>/<HHMMSS>_<tag>.<ext>      raw payload
+    capture/<source>/<YYYY-MM-DD>/<HHMMSS>_<tag>.<ext>      raw payload (`.<ext>.gz` for sources with compress: true)
     capture/<source>/<YYYY-MM-DD>/<HHMMSS>_<tag>.meta.json  fetch metadata
     state/<source>.json                                     per-source cursors (see state.py)
     logs/health.jsonl                                       one line per source run
@@ -12,6 +12,7 @@ Writes are atomic (tmp file + rename) because ``data_root`` may be a cloud-drive
 """
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 import logging
@@ -48,6 +49,12 @@ def atomic_write_bytes(path: Path, data: bytes) -> None:
             os.unlink(tmp)
 
 
+def read_payload(path: Path) -> bytes:
+    """The raw body of a stored payload, decompressing a `.gz` one."""
+    data = Path(path).read_bytes()
+    return gzip.decompress(data) if str(path).endswith(".gz") else data
+
+
 def atomic_write_json(path: Path, obj: Any) -> None:
     atomic_write_bytes(path, json.dumps(obj, ensure_ascii=False, indent=1, sort_keys=True).encode("utf-8"))
 
@@ -61,6 +68,7 @@ class Payload:
     meta: dict[str, Any] = field(default_factory=dict)  # url, params, status, strategy tags, ...
     n_items: int | None = None    # optional item count for the health log
     keep_duplicate: bool = False  # store even if identical to the last payload (a dated proof it was still served)
+    compress: bool = False        # store gzip-compressed as .<ext>.gz (lossless; sha256 stays that of the raw body)
 
 
 class Store:
@@ -102,23 +110,27 @@ class Store:
         day = when.strftime("%Y-%m-%d")
         stamp = when.strftime("%H%M%S")
         base = f"{stamp}_{_safe(payload.tag)}"
+        ext = payload.ext + (".gz" if payload.compress else "")
         d = self.capture_dir / _safe(source) / day
-        path = d / f"{base}.{payload.ext}"
+        path = d / f"{base}.{ext}"
         i = 1
         while path.exists():  # same second, same tag
             i += 1
-            path = d / f"{base}_{i}.{payload.ext}"
-        atomic_write_bytes(path, payload.body)
+            path = d / f"{base}_{i}.{ext}"
+        stored = gzip.compress(payload.body, mtime=0) if payload.compress else payload.body
+        atomic_write_bytes(path, stored)
         meta = dict(payload.meta)
         meta.update({
             "source": source,
             "tag": payload.tag,
             "fetched_at": when.isoformat(),
             "bytes": len(payload.body),
-            "sha256": hashlib.sha256(payload.body).hexdigest(),
+            "sha256": digest,
             "n_items": payload.n_items,
             "file": path.name,
         })
+        if payload.compress:
+            meta.update({"content_encoding": "gzip", "bytes_stored": len(stored)})
         atomic_write_json(path.with_suffix(path.suffix + ".meta.json") if not path.name.endswith(".meta.json") else path, meta)
         atomic_write_bytes(hp, digest.encode())
         return path

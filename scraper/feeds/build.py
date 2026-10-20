@@ -18,6 +18,8 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Iterable, Iterator, Optional
 
+from scraper.capture.store import read_payload
+
 from .base import adapters
 from .model import EvidenceRecord, Place
 
@@ -62,7 +64,7 @@ def build_records(root: Path, sources: Optional[set[str]] = None, since: Optiona
         if status is not None and not (200 <= int(status) < 300):
             continue   # the store keeps error responses for the record; they are not evidence
         try:
-            recs = adapter.records(payload.read_bytes(), meta)
+            recs = adapter.records(read_payload(payload), meta)
         except Exception as e:  # one bad payload must not sink the build
             if errors is not None:
                 errors.append({"file": meta.get("file"), "error": repr(e)})
