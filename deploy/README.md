@@ -16,6 +16,8 @@
 - Each run first checks the internet (TCP to `capture.preflight_hosts`); if it is down the run is skipped without
   touching any source's schedule. A failed source retries after 9 min, doubling per consecutive failure up to its
   cadence. If the data root's parent is missing (Drive not mounted yet) the run exits without creating it.
+- Per-source locks live in `~/Library/Caches/neet-capture/locks` (not on Drive, where deleted files came back).
+  Credentials are redacted from health records and log lines.
 - Surviving a restart: the agent is a LaunchAgent, so it only runs once `ofox` is logged in. Turn on automatic
   login (System Settings > Users & Groups > Automatically log in as) and `sudo pmset -a autorestart 1` (power back
   on after a power cut).

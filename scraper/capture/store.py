@@ -23,6 +23,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .redact import redact
+
 _SAFE = re.compile(r"[^A-Za-z0-9._-]+")
 
 
@@ -123,7 +125,7 @@ class Store:
     # -- health --------------------------------------------------------------
     def health(self, record: dict[str, Any]) -> None:
         record = {"at": utcnow().isoformat(), **record}
-        line = (json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n").encode("utf-8")
+        line = (redact(json.dumps(record, ensure_ascii=False, sort_keys=True)) + "\n").encode("utf-8")
         with (self.logs_dir / "health.jsonl").open("ab") as f:
             f.write(line)
 

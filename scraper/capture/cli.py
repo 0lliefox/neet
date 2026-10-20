@@ -22,6 +22,7 @@ from pathlib import Path
 import requests
 
 from .base import Context, env_snapshot
+from .redact import RedactingFormatter
 from .registry import all_sources
 from .report import RUN, agent_info, build_report, problems, recent_health, source_statuses
 from .state import State
@@ -33,6 +34,9 @@ PREFLIGHT_HOSTS = ("www.gov.uk", "www.bbc.co.uk", "one.one.one.one")
 # local (not on Drive): remembers that the data root was missing on the previous run, so a transient
 # not-yet-mounted Drive at login does not raise a notification but a persistent one does
 NO_ROOT_MARKER = Path.home() / "Library" / "Logs" / "neet-capture.no-data-root"
+# per-source locks are this host's runtime state, so they live on local disk: on the Drive mount, deleted lock
+# files came back (with "name 2" conflict copies), and a stale lock whose PID is reused looks live
+LOCK_DIR = Path.home() / ("Library/Caches" if sys.platform == "darwin" else ".cache") / "neet-capture" / "locks"
 
 
 def _data_root(cfg: dict, override: str | None) -> Path:
@@ -150,8 +154,10 @@ def main(argv: list[str] | None = None) -> int:
     store = Store(root)
     log_path = store.logs_dir / "capture.log"
     # force: scraper.runner configures logging at import, which would otherwise make this a no-op
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-                        handlers=[logging.FileHandler(log_path), logging.StreamHandler(sys.stdout)], force=True)
+    handlers = [logging.FileHandler(log_path), logging.StreamHandler(sys.stdout)]
+    for h in handlers:
+        h.setFormatter(RedactingFormatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+    logging.basicConfig(level=logging.INFO, handlers=handlers, force=True)
     sources = all_sources(cfg)
 
     if args.status:
@@ -166,6 +172,8 @@ def main(argv: list[str] | None = None) -> int:
         _write_status(store, sources, alerts)
         return 0
 
+    lock_dir = Path(cfg.get("lock_dir") or LOCK_DIR).expanduser()
+    lock_dir.mkdir(parents=True, exist_ok=True)
     env = env_snapshot()
     session = requests.Session()
     n_ok = n_err = 0
@@ -180,7 +188,7 @@ def main(argv: list[str] | None = None) -> int:
             store.health({"source": src.name, "ok": False, "skipped": "missing_env", "missing": missing})
             continue
         # per-source lock: a long download (e.g. Street Manager archives) must not block the other sources
-        lock = store.state_dir / f".lock_{src.name}"
+        lock = lock_dir / f".lock_{src.name}"
         if lock.exists():
             age = time.time() - lock.stat().st_mtime
             if not _lock_holder_alive(lock):

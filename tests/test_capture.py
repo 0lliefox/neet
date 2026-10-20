@@ -327,3 +327,21 @@ def test_capture_does_not_create_missing_drive_folder(tmp_path: Path, monkeypatc
     assert len(sent) == 1                               # still missing ten minutes later: tell the user once
     cli.main(["--data-root", str(root)])
     assert len(sent) == 1
+
+
+def test_redact_hides_query_keys_and_secret_env_values(monkeypatch):
+    from scraper.capture.redact import redact
+    monkeypatch.setenv("SOME_API_KEY", "s3cr3tvalue123")
+    monkeypatch.setenv("HOME_DIR_NAME", "notasecret99")
+    s = redact("GET /siri-sx/?api_key=abc123&x=1 failed; header had s3cr3tvalue123; monkey=ok; notasecret99")
+    assert "abc123" not in s and "api_key=REDACTED&x=1" in s
+    assert "s3cr3tvalue123" not in s
+    assert "monkey=ok" in s and "notasecret99" in s
+
+
+def test_health_records_are_redacted(tmp_path: Path):
+    st = Store(tmp_path)
+    st.health({"source": "bods_sirisx", "ok": False,
+               "error": "ConnectionError: HTTPSConnectionPool(host='x'): url: /api/v1/siri-sx/?api_key=7a62020b8b (...)"})
+    line = (st.logs_dir / "health.jsonl").read_text()
+    assert "7a62020b8b" not in line and "api_key=REDACTED" in line
