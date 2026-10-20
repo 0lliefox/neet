@@ -60,6 +60,7 @@ class Payload:
     ext: str = "json"             # file extension
     meta: dict[str, Any] = field(default_factory=dict)  # url, params, status, strategy tags, ...
     n_items: int | None = None    # optional item count for the health log
+    keep_duplicate: bool = False  # store even if identical to the last payload (a dated proof it was still served)
 
 
 class Store:

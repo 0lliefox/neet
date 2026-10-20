@@ -212,7 +212,7 @@ def main(argv: list[str] | None = None) -> int:
                 if p is None:
                     continue
                 try:  # one payload that cannot be written must not lose the rest of the run
-                    if store.write(src.name, p) is None:
+                    if store.write(src.name, p, skip_unchanged=not p.keep_duplicate) is None:
                         n_unchanged += 1
                     else:
                         n_written += 1

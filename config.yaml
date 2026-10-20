@@ -223,7 +223,10 @@ capture:
       bbox: {bbox_p1_x: -1.80, bbox_p1_y: 54.90, bbox_p2_x: -1.35, bbox_p2_y: 55.08}
       variables: ["Journey Time", "NO2", "Temperature", "Humidity", "Wind Speed", "Occupied spaces", "PM2.5", "Rainfall", "Traffic Flow"]
     police: {cadence_s: 86400, points: [{lat: 54.9781, lng: -1.6162, name: newcastle_centre}, {lat: 54.9627, lng: -1.6017, name: gateshead}, {lat: 55.0090, lng: -1.4470, name: north_shields},
-                                      {lat: 54.7765, lng: -1.5757, name: durham}]}   # Durham: the geographic hold-out
+                                      {lat: 54.7765, lng: -1.5757, name: durham}],   # Durham: the geographic hold-out
+             # Held-out rule (Oliver, 20 Oct): a Durham month counts if Police.uk serves it after the LaSSI v4.4 freeze
+             # tag. Set `after` to the tag time (UTC) and the Durham months are fetched once more and stored as dated proof.
+             recapture: {after: null, points: [durham]}}
     streetmanager_archive: {cadence_s: 86400, kinds: [permit, activity, section_58], min_key_year: 2026, max_downloads_per_run: 2}
     onenetwork: {cadence_s: 86400}
     bluesky: {cadence_s: 1800, s3_max_authors: 600}

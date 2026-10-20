@@ -345,3 +345,29 @@ def test_health_records_are_redacted(tmp_path: Path):
                "error": "ConnectionError: HTTPSConnectionPool(host='x'): url: /api/v1/siri-sx/?api_key=7a62020b8b (...)"})
     line = (st.logs_dir / "health.jsonl").read_text()
     assert "7a62020b8b" not in line and "api_key=REDACTED" in line
+
+
+def test_police_recaptures_durham_months_once_after_the_tag(tmp_path, monkeypatch):
+    from datetime import datetime, timezone
+    import scraper.capture.sources.police_monthly as pm
+    published = {"2026-09": b'[{"id": 9}]', "2026-08": b'[{"id": 8}]'}
+    sess = _FakeSession(lambda url, p: (200, published[p["date"]]) if p["date"] in published else (404, b""))
+    newcastle = {"lat": 54.9781, "lng": -1.6162, "name": "newcastle_centre"}
+    durham = {"lat": 54.7765, "lng": -1.5757, "name": "durham"}
+    cfg = {"points": [newcastle, durham], "pause_s": 0, "retry_s": 0,
+           "recapture": {"after": "2026-10-25T12:00:00Z", "points": ["durham"]}}
+    ctx = _ctx(tmp_path, "police", sess)
+    monkeypatch.setattr(pm, "utcnow", lambda: datetime(2026, 10, 20, tzinfo=timezone.utc))
+    out = pm.PoliceMonthlySource(cfg).fetch(ctx)           # before the tag: an ordinary run
+    assert not any(p.keep_duplicate for p in out) and len(out) == 4
+    for p in out:
+        ctx.store.write("police", p)
+    sess.calls.clear()
+    monkeypatch.setattr(pm, "utcnow", lambda: datetime(2026, 10, 26, tzinfo=timezone.utc))
+    out = pm.PoliceMonthlySource(cfg).fetch(ctx)           # after the tag: Durham only, stored although unchanged
+    assert sorted(p.tag for p in out) == ["durham_2026-08", "durham_2026-09"]
+    assert all(p.keep_duplicate and p.meta["recapture_after"] == "2026-10-25T12:00:00+00:00" for p in out)
+    assert all(ctx.store.write("police", p, skip_unchanged=not p.keep_duplicate) is not None for p in out)
+    sess.calls.clear()
+    assert pm.PoliceMonthlySource(cfg).fetch(ctx) == []     # once only: published months are not asked again
+    assert not [c for c in sess.calls if c[1]["date"] in published]
