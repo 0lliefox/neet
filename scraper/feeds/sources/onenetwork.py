@@ -1,6 +1,10 @@
 """one.network tile properties: the only source of the promoter-authored telegraphic `works_desc`.
 kind=notice, domain=roadworks, validity = start_date/end_date, place = usrn + road name (tile geometry is
-kept when the capture stores it — see `RoadworksScraper._iter_tile_features`; older captures have none)."""
+kept when the capture stores it — see `RoadworksScraper._iter_tile_features`; older captures have none).
+
+The native id stays the tile feature `id` (record_ids are unchanged), but an item is the works: its `works_ref`
+(one works can carry several feature ids, e.g. a permit variation) and its feature `id`, which survives a
+rescheduled start date. Features without a works_ref are keyed by id alone."""
 from __future__ import annotations
 
 from typing import Any
@@ -53,13 +57,17 @@ class OneNetworkAdapter(Adapter):
             vf, vt = iso_utc(first(p, "start_date", "startdate")), iso_utc(first(p, "end_date", "enddate"))
             out.append(EvidenceRecord(
                 source=self.source, kind="notice", domain="roadworks", text=desc, rendered_text=render(p),
-                structured={k: p.get(k) for k in ("id", "work_ref", "usrn", "road_name", "pub_name", "resporg_name", "swtype", "traffman", "delay",
+                structured={k: p.get(k) for k in ("id", "works_ref", "permit_ref", "usrn", "road_name", "pub_name", "resporg_name", "swtype", "traffman", "delay",
                                                    "impact", "works_state", "permit_status", "ttro_state", "start_date", "end_date", "_tile", "_layer")},
                 place=Place(name=road, usrn=str(p["usrn"]) if p.get("usrn") not in (None, "") else None, geometry=geom,
                             confidence=1.0 if geom else (0.8 if p.get("usrn") else 0.0), method="source_geometry" if geom else ("usrn" if p.get("usrn") else "none")),
                 observed_at=self.fetched_at(meta), fetched_at=self.fetched_at(meta), valid_from=vf, valid_to=vt,
                 native_id=str(first(p, "work_ref", "id", default="")) or None, reliability_hint=self.reliability_hint, provenance=self.provenance(meta)))
         return out
+
+    def lineage_keys(self, record: EvidenceRecord) -> list[str]:
+        s = record.structured
+        return [f"{k}:{s[k]}" for k in ("works_ref", "id") if s.get(k) not in (None, "")] or [record.record_id]
 
 
 register(OneNetworkAdapter())

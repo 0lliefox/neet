@@ -250,6 +250,25 @@ class LineageTests(unittest.TestCase):
         self.assertEqual(by_title["Lift out of service"].first_seen, "2026-10-03T09:00:00Z")
         self.assertEqual(len({r.item_key for r in recs}), 3)
 
+    def test_rescheduled_works_keep_one_key(self):
+        f = lambda id_, ref, start: {"id": id_, "works_ref": ref, "start_date": start, "end_date": "2026-12-01T00:00:00",
+                                     "works_desc": "x", "road_name": "A Road", "pub_name": "Newcastle City Council"}
+        caps = [("2026-10-01T10:00:00+00:00", {"features": [f(1, "NE001", "2026-10-10T00:00:00"), f(5, None, "2026-10-10T00:00:00")]}),
+                ("2026-10-02T10:00:00+00:00", {"features": [f(1, "NE001", "2026-10-17T00:00:00"),    # rescheduled
+                                                            f(2, "NE001", "2026-10-20T00:00:00"),    # another feature of the works
+                                                            f(5, None, "2026-10-11T00:00:00"),       # no works_ref: keyed by id
+                                                            f(3, "NE002", "2026-10-20T00:00:00")]})]
+        recs = self._build("onenetwork", "tiles", caps)
+        self.assertEqual(len({r.record_id for r in recs}), 6)          # record_id includes the start date
+        key = lambda id_: {r.item_key for r in recs if r.structured["id"] == id_}
+        self.assertEqual(len(key(1)), 1)
+        self.assertEqual(key(1), key(2))
+        self.assertEqual(len(key(5)), 1)
+        self.assertEqual(len({r.item_key for r in recs}), 3)
+        self.assertEqual({r.first_seen for r in recs if r.structured["id"] in (1, 2, 5)}, {"2026-10-01T10:00:00Z"})
+        self.assertEqual({r.first_seen for r in recs if r.structured["id"] == 3}, {"2026-10-02T10:00:00Z"})
+        self.assertEqual({r.structured["works_ref"] for r in recs if r.structured["id"] == 1}, {"NE001"})
+
 
 if __name__ == "__main__":
     unittest.main()
