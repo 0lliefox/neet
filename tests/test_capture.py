@@ -398,3 +398,83 @@ def test_feeds_build_reads_compressed_bods_payloads(tmp_path: Path):
     a = [r.record_id for r in build_records(plain, {"bods_sirisx"})]
     b = [r.record_id for r in build_records(packed, {"bods_sirisx"})]
     assert a and a == b
+
+
+def _tile_get(fail: set, empty: set = frozenset(), dns: bool = False):
+    """requests.get stand-in for one.network tiles: tiles in `fail` error, in `empty` return no bytes, others one feature."""
+    import requests
+
+    def get(url, params=None, headers=None, timeout=None):
+        x = int(url.split("/")[-2])
+        y = int(url.rsplit("/", 1)[1].split(".")[0])
+        if (x, y) in fail:
+            if dns:
+                raise requests.ConnectionError("Failed to resolve 'tiles.one.network' (NameResolutionError)")
+            r = requests.Response(); r.status_code, r._content = 503, b""
+            return r
+        r = requests.Response(); r.status_code, r._content = 200, (b"" if (x, y) in empty else f"{x},{y}".encode())
+        return r
+    return get
+
+
+def _patch_tiles(monkeypatch, get):
+    import sys, types
+    import requests
+    monkeypatch.setattr(requests, "get", get)
+    fake = types.SimpleNamespace(decode=lambda b: {"roadworks": {"extent": 4096, "features": [
+        {"properties": {"id": int(b.decode().replace(",", "")), "works_desc": "x"}, "geometry": None}]}})
+    monkeypatch.setitem(sys.modules, "mapbox_vector_tile", fake)
+
+
+def test_roadworks_tiles_count_failures_but_not_empty_tiles(monkeypatch):
+    from scraper.scrapers.roadworks import RoadworksScraper
+    _patch_tiles(monkeypatch, _tile_get(fail={(507, 323), (508, 324)}, empty={(506, 323)}))
+    s = RoadworksScraper(max_items=10000)
+    feats = s.fetch_tile_features()
+    assert len(feats) == 3                      # 6 tiles: 2 failed, 1 empty
+    assert s.tile_stats["tiles"] == 6 and s.tile_stats["failed"] == 2
+    assert all("HTTP 503" in e for e in s.tile_stats["errors"])
+
+
+def test_onenetwork_marks_partial_tiles_and_collapse_degraded(tmp_path, monkeypatch):
+    from scraper.capture.sources.onenetwork import OneNetworkSource
+    ctx = _ctx(tmp_path, "onenetwork", None)
+    _patch_tiles(monkeypatch, _tile_get(fail=set()))
+    (p,) = OneNetworkSource().fetch(ctx)
+    assert "degraded" not in p.meta and p.meta["tiles_failed"] == 0 and ctx.state.get("recent_n_features") == [6]
+    _patch_tiles(monkeypatch, _tile_get(fail={(507, 323)}))
+    (p,) = OneNetworkSource().fetch(ctx)
+    assert p.meta["degraded"] == "1/6 tiles failed" and p.n_items == 5
+    assert ctx.state.get("recent_n_features") == [6]          # a degraded run is not a baseline
+    ctx.state.set("recent_n_features", [4000, 3900, 4100])     # every tile answers, but far fewer works than normal
+    _patch_tiles(monkeypatch, _tile_get(fail=set()))
+    (p,) = OneNetworkSource().fetch(ctx)
+    assert p.meta["degraded"] == "6 features, normal ~4000"
+
+
+def test_onenetwork_outage_is_a_failure_in_health_and_status(tmp_path, monkeypatch):
+    """16-19 Oct replay: every tile fails on DNS. Then a partial run: stored, but failed and flagged."""
+    import scraper.capture.cli as cli
+    from scraper.capture.sources.onenetwork import OneNetworkSource
+    monkeypatch.setattr(cli, "all_sources", lambda cfg: [OneNetworkSource({})])
+    monkeypatch.setattr(cli, "_network_problem", lambda hosts: None)
+    monkeypatch.setattr(cli, "notify", lambda *a: None)
+    from datetime import datetime, timedelta, timezone
+    st = Store(tmp_path)
+    prev = State(st.state_dir, "onenetwork")
+    prev.mark_run(now=datetime.now(timezone.utc) - timedelta(hours=1)); prev.save()    # yesterday's run was fine
+    _patch_tiles(monkeypatch, _tile_get(fail={(x, y) for x in (506, 507, 508) for y in (323, 324)}, dns=True))
+    assert cli.main(["--data-root", str(tmp_path), "--force"]) == 0
+    rec = st.last_health()["onenetwork"]
+    assert rec["ok"] is False and "6/6 tiles failed" in rec["error"] and "NameResolution" in rec["error"]
+    status = (st.logs_dir / "STATUS.txt").read_text()
+    assert "PROBLEM: onenetwork" in status and "FAILING" in status and "DNS lookup failed" in status
+
+    _patch_tiles(monkeypatch, _tile_get(fail={(506, 324), (508, 323)}))
+    assert cli.main(["--data-root", str(tmp_path), "--force"]) == 0
+    rec = Store(tmp_path).last_health()["onenetwork"]
+    assert rec["ok"] is False and rec["n_written"] == 1 and rec["degraded"] == ["tiles: 2/6 tiles failed"]
+    meta = json.loads(next((tmp_path / "capture" / "onenetwork").glob("*/*_tiles.json.meta.json")).read_text())
+    assert meta["degraded"] == "2/6 tiles failed" and meta["tiles_failed"] == 2
+    status = (st.logs_dir / "STATUS.txt").read_text()
+    assert "PROBLEM: onenetwork" in status and "DEGRADED" in status and "incomplete: tiles: 2/6 tiles failed" in status

@@ -208,6 +208,8 @@ def main(argv: list[str] | None = None) -> int:
             statuses = []
             n_written = n_unchanged = 0
             write_errors: list[str] = []
+            # a payload the source marks degraded (partial data) is kept, but the run counts as failed
+            degraded = [f"{p.tag}: {p.meta['degraded']}" for p in payloads if p is not None and p.meta.get("degraded")]
             for p in payloads:
                 if p is None:
                     continue
@@ -223,13 +225,16 @@ def main(argv: list[str] | None = None) -> int:
                     continue
                 n_items += p.n_items or 0
                 statuses.append(p.meta.get("status"))
-            ok = (all((s is None) or (200 <= int(s) < 300) for s in statuses) if statuses else True) and not write_errors
+            ok = (all((s is None) or (200 <= int(s) < 300) for s in statuses) if statuses else True) and not write_errors and not degraded
             state.mark_run(ok=ok); state.save()
             rec = {"source": src.name, "ok": ok, "n_payloads": len(payloads), "n_written": n_written,
                    "n_unchanged": n_unchanged, "n_items": n_items,
                    "duration_s": round(time.time() - t0, 1), "statuses": statuses[:20]}
             if write_errors:
                 rec.update({"n_write_errors": len(write_errors), "write_errors": write_errors[:3]})
+            if degraded:
+                rec["degraded"] = degraded[:3]
+                logger.warning("source %s degraded: %s", src.name, "; ".join(degraded))
             store.health(rec)
             n_ok += 1
         except Exception as exc:

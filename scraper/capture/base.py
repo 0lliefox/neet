@@ -31,6 +31,7 @@ class CaptureSource:
     name: str = "base"
     cadence_s: int = 3600
     requires_env: tuple[str, ...] = ()   # env vars that must be present, else the source is skipped
+    alert_on_failure: bool = False       # a failed run is a status problem (and notifies) at once, not after 2 cadences
 
     def __init__(self, cfg: dict[str, Any] | None = None) -> None:
         self.cfg = cfg or {}

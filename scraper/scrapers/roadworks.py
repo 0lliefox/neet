@@ -172,12 +172,17 @@ class RoadworksScraper(BaseScraper):
 
         z = self._tile_zoom
         seen_ids: set[str] = set()
+        # an empty 2xx tile is a map with no works there; an error status, a network error or an undecodable
+        # tile is a failure, counted so the capture job can tell an outage from a quiet map
+        self.tile_stats = {"tiles": len(self._tiles), "failed": 0, "errors": []}
         for x, y in self._tiles:
             url = self.ONE_NETWORK_TILE_URL.format(z=z, x=x, y=y)
             try:
                 resp = requests.get(url, params=params, headers=headers, timeout=15)
-                if not resp.ok or not resp.content:
-                    logger.debug("Tile %s/%s/%s: status=%s size=%s", z, x, y, resp.status_code, len(resp.content))
+                if not resp.ok:
+                    raise RuntimeError(f"HTTP {resp.status_code}")
+                if not resp.content:
+                    logger.debug("Tile %s/%s/%s: empty", z, x, y)
                     continue
                 tile = mapbox_vector_tile.decode(resp.content)
                 for layer_name, layer in tile.items():
@@ -197,7 +202,9 @@ class RoadworksScraper(BaseScraper):
                             props["_geometry"] = geom
                         yield props
             except Exception as exc:
-                logger.debug("Tile %s/%s/%s fetch error: %s", z, x, y, exc)
+                logger.warning("Tile %s/%s/%s fetch error: %s", z, x, y, exc)
+                self.tile_stats["failed"] += 1
+                self.tile_stats["errors"].append(f"{z}/{x}/{y}: {type(exc).__name__}: {exc}"[:200])
 
     def fetch_tile_features(self) -> list[dict]:
         """Raw one.network feature properties for the configured window (used by the capture job)."""

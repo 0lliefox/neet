@@ -2,7 +2,9 @@
 ``logs/STATUS.txt`` after every run (readable from the Google Drive app without the Mac).
 
 A source is a *problem* once its last success is older than ``2 x cadence + 15 min``; a failure inside that window is
-shown as ``retrying``. Network outages are spans of the health log in which every attempt failed on DNS/connect.
+shown as ``retrying``, except that a run which stored only partial data (``degraded`` in its health record, e.g.
+onenetwork tiles failing) is a problem at once, because the missing items would look first-seen later, and so is
+any failure of a source with ``alert_on_failure`` (``failing``). Network outages are spans of the health log in which every attempt failed on DNS/connect.
 """
 from __future__ import annotations
 
@@ -39,12 +41,12 @@ class SourceStatus:
     name: str
     cadence_s: int
     last_success: datetime | None
-    level: str          # ok | retrying | stale | never
+    level: str          # ok | retrying | failing | degraded | stale | never
     note: str           # why the last attempt failed ("" when it did not)
 
     @property
     def problem(self) -> bool:
-        return self.level in ("stale", "never")
+        return self.level in ("stale", "never", "degraded", "failing")
 
 
 def is_network_failure(rec: dict[str, Any]) -> bool:
@@ -57,6 +59,8 @@ def short_error(rec: dict[str, Any]) -> str:
     """One readable phrase for a failed health record."""
     if rec.get("ok"):
         return ""
+    if rec.get("degraded"):
+        return "incomplete: " + "; ".join(rec["degraded"])[:80]
     if rec.get("skipped"):
         return f"skipped: {rec['skipped']} {','.join(rec.get('missing') or [])}".strip()
     err = rec.get("error") or ""
@@ -93,7 +97,7 @@ def source_statuses(store: Store, sources: Iterable, now: datetime | None = None
         elif (now - ls).total_seconds() > tolerance_s(src.cadence_s):
             level = "stale"
         elif st.fail_streak():
-            level = "retrying"
+            level = "degraded" if rec.get("degraded") else ("failing" if getattr(src, "alert_on_failure", False) else "retrying")
         else:
             level = "ok"
         out.append(SourceStatus(src.name, src.cadence_s, ls, level, short_error(rec) if rec else ""))
