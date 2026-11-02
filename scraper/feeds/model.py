@@ -48,6 +48,10 @@ class EvidenceRecord:
     reliability_hint: str = "official_operator"
     provenance: dict[str, Any] = field(default_factory=dict)
     record_id: str = ""
+    # Set by `build.py` across all captures in the build (see `lineage.py`): `item_key` names the published item
+    # however often its text or dates change, `first_seen` is the earliest capture of any version of it.
+    item_key: str = ""
+    first_seen: Optional[str] = None
 
     def __post_init__(self) -> None:
         if self.kind not in KINDS:

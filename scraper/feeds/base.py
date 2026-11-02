@@ -38,6 +38,11 @@ class Adapter:
     def records(self, body: bytes, meta: dict[str, Any]) -> list[EvidenceRecord]:  # pragma: no cover - abstract
         raise NotImplementedError
 
+    def lineage_keys(self, record: EvidenceRecord) -> list[str]:
+        """Identifiers that mark two records as versions of one published item (see `lineage.py`). Never derived
+        from fetch time. Default: the record itself."""
+        return [record.record_id]
+
     # -- helpers shared by adapters -------------------------------------------------
     def provenance(self, meta: dict[str, Any]) -> dict[str, Any]:
         return {k: meta.get(k) for k in ("file", "sha256", "url", "tag", "source") if meta.get(k) is not None}

@@ -7,6 +7,9 @@ Walks `<root>/capture/<source>/<day>/<time>_<tag>.<ext>` with its `.meta.json`, 
 source, resolves Bluesky `dupes` against sibling payloads of the same run, and writes one JSON line per record
 (sorted, deterministic). Continuity under hash de-dup: for every (source, tag) the *last written* payload is the
 one still in force, so `report` also lists the most recent capture per (source, tag).
+
+Every record also gets `item_key` and `first_seen` (`lineage.py`). They are computed over the captures in the
+build, so held-out eligibility (first seen after the tag) needs a build without `--since`.
 """
 from __future__ import annotations
 
@@ -21,6 +24,7 @@ from typing import Iterable, Iterator, Optional
 from scraper.capture.store import read_payload
 
 from .base import adapters
+from .lineage import assign_lineage
 from .model import EvidenceRecord, Place
 
 
@@ -86,6 +90,7 @@ def build_records(root: Path, sources: Optional[set[str]] = None, since: Optiona
             if uri not in by_uri:
                 errors.append({"file": meta.get("file"), "error": f"unresolved dupe {uri}"})
     enrich(out)
+    assign_lineage(out, reg)
     out.sort(key=lambda r: (r.source, r.valid_from or "", r.record_id))
     return out
 
@@ -174,6 +179,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             p.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     errors: list = []
+    if a.since:
+        print(f"note: first_seen counts only captures from {a.since}; build without --since for eligibility", file=sys.stderr)
     recs = build_records(Path(a.root), set(a.source) if a.source else None, a.since, a.until, errors)
     if a.cmd == "build":
         n = write_jsonl(recs, Path(a.out))

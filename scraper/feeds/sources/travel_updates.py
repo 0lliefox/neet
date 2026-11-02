@@ -1,7 +1,12 @@
 """travelnortheast.uk live updates (Metro/bus/ferry) scraped with Playwright: kind=notice, domain=transport.
 Only the `updates` JSON payload is adapted (the raw `page` HTML is the reproducible record, not evidence).
 The site gives no stable id, so the native id is a hash of title+body; `effective_from/until` are human
-strings ("Mon 22 Sep, 9am") parsed best-effort into UTC instants relative to the capture year."""
+strings ("Mon 22 Sep, 9am") parsed best-effort into UTC instants relative to the capture year; when they cannot
+be parsed, valid_from falls back to the fetch time, so record_ids are per version, not per notice.
+
+An item is a notice across edits: versions that share their title or their body (whitespace and case ignored) are
+one notice. Versions sharing a title never co-exist on the page, so a shared title is an edit or a re-post. A
+notice whose title and body both change in one edit is not linked."""
 from __future__ import annotations
 
 import hashlib
@@ -74,6 +79,11 @@ class TravelUpdatesAdapter(Adapter):
                 native_id="tu_" + hashlib.sha1((title + "\n" + text_body).encode("utf-8")).hexdigest()[:16],
                 reliability_hint=self.reliability_hint, provenance=self.provenance(meta)))
         return out
+
+    def lineage_keys(self, record: EvidenceRecord) -> list[str]:
+        norm = lambda v: re.sub(r"\s+", " ", str(v or "")).strip().lower()
+        title, body = norm(record.structured.get("title")), norm(record.structured.get("body"))
+        return [k for k in ((f"title:{title}" if title else ""), (f"body:{body}" if body else "")) if k] or [record.record_id]
 
 
 register(TravelUpdatesAdapter())

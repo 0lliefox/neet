@@ -211,5 +211,45 @@ class AdapterGoldenTests(unittest.TestCase):
         self.assertIn("onenetwork", report(recs))
 
 
+def _write_capture(root: Path, source: str, tag: str, fetched_at: str, body: dict) -> None:
+    day, hms = fetched_at[:10], fetched_at[11:19].replace(":", "")
+    d = root / "capture" / source / day
+    d.mkdir(parents=True, exist_ok=True)
+    (d / f"{hms}_{tag}.json").write_text(json.dumps(body), encoding="utf-8")
+    (d / f"{hms}_{tag}.json.meta.json").write_text(json.dumps({"fetched_at": fetched_at, "tag": tag, "source": source}), encoding="utf-8")
+
+
+class LineageTests(unittest.TestCase):
+    """First-seen is per published item, never per version or fetch time."""
+
+    def _build(self, source, tag, captures):
+        with tempfile.TemporaryDirectory() as tmp:
+            for at, body in captures:
+                _write_capture(Path(tmp), source, tag, at, body)
+            return build_records(Path(tmp), {source})
+
+    def test_travel_notice_without_dates_keeps_one_key_across_captures(self):
+        u = {"title": "Lift out of service", "body": "Use the stairs.", "effective_from": None}
+        recs = self._build("travel_updates", "updates", [("2026-10-01T09:00:00+00:00", {"updates": [u]}),
+                                                           ("2026-10-05T09:00:00+00:00", {"updates": [u]})])
+        self.assertEqual(len({r.record_id for r in recs}), 2)          # valid_from fell back to fetch time
+        self.assertEqual(len({r.item_key for r in recs}), 1)
+        self.assertEqual({r.first_seen for r in recs}, {"2026-10-01T09:00:00Z"})
+
+    def test_edited_travel_notice_keeps_its_first_seen(self):
+        caps = [("2026-10-01T09:00:00+00:00", {"updates": [{"title": "Delays at Haymarket", "body": "Signal fault."},
+                                                           {"title": "Ferry suspended", "body": "High winds."}]}),
+                ("2026-10-02T09:00:00+00:00", {"updates": [{"title": "Delays at Haymarket", "body": "Signal fault, now fixed."},
+                                                           {"title": "Ferry suspended until 4pm", "body": "High winds."}]}),
+                ("2026-10-03T09:00:00+00:00", {"updates": [{"title": "Lift out of service", "body": "Use the stairs."}]})]
+        recs = self._build("travel_updates", "updates", caps)
+        by_title = {r.structured["title"]: r for r in recs}
+        self.assertEqual(by_title["Delays at Haymarket"].item_key, [r for r in recs if r.structured["body"] == "Signal fault, now fixed."][0].item_key)
+        self.assertEqual(by_title["Ferry suspended until 4pm"].item_key, by_title["Ferry suspended"].item_key)
+        self.assertEqual(by_title["Ferry suspended until 4pm"].first_seen, "2026-10-01T09:00:00Z")
+        self.assertEqual(by_title["Lift out of service"].first_seen, "2026-10-03T09:00:00Z")
+        self.assertEqual(len({r.item_key for r in recs}), 3)
+
+
 if __name__ == "__main__":
     unittest.main()
