@@ -291,7 +291,7 @@ def test_report_flags_stale_sources_and_says_all_good(tmp_path: Path):
         def __init__(self, name, cadence):
             super().__init__({"cadence_s": cadence}); self.name = name
 
-    now = datetime(2026, 10, 20, 12, tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
     st = Store(tmp_path)
     fresh, old = State(st.state_dir, "fresh"), State(st.state_dir, "old")
     fresh.mark_run(now=now - timedelta(minutes=5)); fresh.save()
