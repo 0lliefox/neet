@@ -200,8 +200,14 @@ of the 40 record_ids in official_sample.json); `baseline` (first seen in the fir
 onenetwork tile, i.e. tile 10/507/325 added 3 Nov 2026 for Durham city centre); `street_manager` (onenetwork works
 whose `works_ref` has a Street Manager permit event before the window start, read from the monthly permit
 archives' member names, so a works first published while a tile was down is not new); `not_renderable`;
-`too_long` (rendered evidence longer than `max_evidence_chars` characters: the item is dropped, never cut; Oliver,
-3 Nov: only notices reasonable to parse as full sentences. Off by default; the value used is in the pool sidecar).
+`too_long` (rendered evidence longer than `max_evidence_chars` = **400** characters: the item is dropped whole,
+never cut. Oliver, 3 Nov: only evidence reasonable to parse as full sentences, and no evidence may contain a cut-off
+sentence; 400 was set by the LaSSI v4.4 session as nearest the range LaSSI was developed on, CURB's longest evidence
+being 309 characters. The value used is in the pool sidecar; `--max-evidence-chars 0` turns the rule off).
+
+Nothing in the render path cuts text. The one slice in the reused v1 code, `evidence[:350]` in
+`RoadworksScraper._tile_feature_to_item` (v1's item builder), is not on the export's path: the export calls
+`format_tile_evidence`, which returns the whole sentence. v1's own output is unchanged.
 
 ## Lineage: what counts as one item
 
@@ -266,7 +272,7 @@ Wording reuses the v1 (CURB) formatters with the city as a parameter (`scraper/s
   `{heading}. Effective from: {from}. [Effective until: {until}.] {body line 1}. {body line 2}. ...`
   Lines that are only a link (timetable PDFs, "For more details") are left out. CURB's v1 text glued the heading
   onto the body, joined the body's lines with spaces and cut at 250 characters, sometimes mid-sentence. Evidence
-  is never cut (Oliver, 3 Nov); `max_evidence_chars` drops long items instead. All notices on the page are in
+  is never cut (Oliver, 3 Nov); `max_evidence_chars` (400) drops long items instead. All notices on the page are in
   scope, bus and ferry notices included (Oliver, 3 Nov); the domain stays `transport`.
 
 ## Template check against CURB (5 items per domain, `neet heldout docs`)

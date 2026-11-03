@@ -171,9 +171,23 @@ def test_pool_settings_switch_rules(tmp_path, store, dev):
     assert rows and all(len(r["evidence_text"]) <= 120 for r in rows)
     assert meta["counts"]["counts"]["too_long"]["transport/newcastle"] == 1          # dropped, not cut
     assert meta["counts"]["counts"]["date_time_fallback"] == {}
+    assert meta["settings"]["max_evidence_chars"] == 120
     assert not [r for r in rows if (r["domain"], r["city"]) == ("crime", "durham")]   # August was not served in the window
-    assert "street_manager" not in json.dumps(meta["counts"]["counts"]["street_manager"]) and meta["counts"]["counts"]["street_manager"] == {}
+    assert meta["counts"]["counts"]["street_manager"] == {}
     assert meta["settings"]["durham_crime_all_captured"] is False
+
+
+def test_length_cap_defaults_to_400_and_can_be_turned_off(tmp_path, store, dev):
+    _, _, meta = _pool(tmp_path, store, dev)
+    assert meta["settings"]["max_evidence_chars"] == 400
+    _, _, meta = _pool(tmp_path, store, dev, "--max-evidence-chars", "0")
+    assert meta["settings"]["max_evidence_chars"] is None
+
+
+def test_export_roadworks_text_is_not_cut_at_v1s_350():
+    long = "Excavate in footway to repair a leaking joint on the water main. " * 8
+    row = render.roadworks({"structured": {"road_name": "Grey Street", "end_date": "2026-11-30"}, "text": long.strip()}, "newcastle", "")
+    assert long.strip() in row["evidence_text"] and len(row["evidence_text"]) > 350
 
 
 def test_sample_and_claims_are_seeded_and_mirror_curb(tmp_path, store, dev):
@@ -261,3 +275,18 @@ def test_v1_weather_sentence_is_unchanged():
     step = {"time": "2026-04-13T11:00Z", "screenTemperature": 10.42, "windSpeed10m": 2.8, "probOfPrecipitation": 1, "significantWeatherCode": 1}
     assert format_forecast_evidence(step) == ("Met Office forecast for Newcastle upon Tyne: Sunny day, 10.42°C, wind 2.8 mph, "
                                               "1% chance of precipitation at 2026-04-13T11:00Z.")       # CURB weather_001
+
+
+def test_street_manager_names_from_a_truncated_archive(tmp_path):
+    from scraper.heldout.pool import street_manager_first_events
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        for i in range(3):
+            z.writestr(f"NE{i}-01_permit_granted_event_2026-06-0{i + 1}_09-00-00-0000.json", "{}" * 50)
+    cut = buf.getvalue()[: len(buf.getvalue()) - 120]        # the central directory is lost, as in June 2026's archive
+    root = tmp_path / "drive"
+    _put(root, "streetmanager_archive", "2026-09-23T00:42:38Z", "permit_2026_06", cut, "zip")
+    rep: dict = {}
+    first = street_manager_first_events(root, {"NE0", "NE1", "NE2"}, rep)
+    assert first == {"NE0": "2026-06-01T09:00:00Z", "NE1": "2026-06-02T09:00:00Z", "NE2": "2026-06-03T09:00:00Z"}
+    assert rep["from_local_headers"] == ["000000_permit_2026_06.zip: 3 names"] or rep["from_local_headers"][0].endswith(": 3 names")
