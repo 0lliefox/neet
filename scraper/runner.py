@@ -126,6 +126,9 @@ def main(argv: list[str] | None = None) -> int:
     if argv and argv[0] == "feeds":
         from scraper.feeds.build import main as feeds_main
         return feeds_main(argv[1:])
+    if argv and argv[0] == "heldout":
+        from scraper.heldout.cli import main as heldout_main
+        return heldout_main(argv[1:])
     parser = argparse.ArgumentParser(
         description="Scrape North East civic evidence snippets for the NEET dataset."
     )
