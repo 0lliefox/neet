@@ -220,15 +220,14 @@ class RoadworksScraper(BaseScraper):
         "3": "delays likely", "4": "severe delays",
     }
 
-    def _tile_feature_to_item(self, props: dict, scraped_at: str) -> "EvidenceItem | None":
-        # One.Network feature fields (confirmed from live tile data)
-        works_desc = str(props.get("works_desc", "")).strip()
-        road_name = str(props.get("road_name", "")).strip()
-        traffman = str(props.get("traffman", "")).strip()
-        delay = str(props.get("delay", "")).strip()
-        start_date = str(props.get("start_date", scraped_at)).strip()
-        end_date = str(props.get("end_date", "")).strip()
-        pub_name = str(props.get("pub_name", "")).strip()
+    @staticmethod
+    def format_tile_evidence(props: dict) -> "str | None":
+        """The v1 (CURB) evidence sentence for one tile feature, or None when it has no usable description or road."""
+        works_desc = str(props.get("works_desc") or "").strip()
+        road_name = str(props.get("road_name") or "").strip()
+        traffman = str(props.get("traffman") or "").strip()
+        delay = str(props.get("delay") or "").strip()
+        end_date = str(props.get("end_date") or "").strip()
 
         if not works_desc or len(works_desc) < 10:
             return None
@@ -243,8 +242,17 @@ class RoadworksScraper(BaseScraper):
         if end_date:
             end_str = end_date[:10]
             parts.append(f"Work expected to end {end_str}.")
+        return " ".join(parts)
 
-        evidence = " ".join(parts)
+    def _tile_feature_to_item(self, props: dict, scraped_at: str) -> "EvidenceItem | None":
+        # One.Network feature fields (confirmed from live tile data)
+        road_name = str(props.get("road_name", "")).strip()
+        start_date = str(props.get("start_date", scraped_at)).strip()
+        pub_name = str(props.get("pub_name", "")).strip()
+
+        evidence = self.format_tile_evidence(props)
+        if evidence is None:
+            return None
         location = f"{road_name}, {pub_name}" if pub_name else road_name
 
         return EvidenceItem(

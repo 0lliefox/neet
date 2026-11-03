@@ -183,7 +183,7 @@ class PoliceScraper(BaseScraper):
 
     @staticmethod
     def _format_api_evidence(
-        category: str, street: str, month: str, outcome: str
+        category: str, street: str, month: str, outcome: str, city: str = "Newcastle"
     ) -> str:
         try:
             dt = datetime.strptime(month, "%Y-%m")
@@ -191,7 +191,7 @@ class PoliceScraper(BaseScraper):
         except ValueError:
             month_label = month
 
-        base = f"{category} recorded on {street}, Newcastle, in {month_label}."
+        base = f"{category} recorded on {street}, {city}, in {month_label}."
         if outcome:
             base += f" Outcome: {outcome}."
         return base

@@ -48,6 +48,29 @@ WX_CODES = {
 
 from scraper.base import BaseScraper, EvidenceItem
 
+
+def format_forecast_evidence(entry: dict, place: str = "Newcastle upon Tyne") -> str:
+    """The v1 (CURB) sentence for one DataHub hourly step. `windSpeed10m` is printed as given (the DataHub unit is
+    m/s) with the label "mph", as CURB's evidence has it."""
+    time_str = entry.get("time", "")
+    temp = entry.get("screenTemperature")
+    wx_code = entry.get("significantWeatherCode")
+    wind_speed = entry.get("windSpeed10m")
+    precip_prob = entry.get("probOfPrecipitation")
+
+    condition = WX_CODES.get(wx_code, "Unknown conditions") if wx_code is not None else "Variable conditions"
+
+    parts = [f"Met Office forecast for {place}: {condition}"]
+    if temp is not None:
+        parts.append(f"{temp}°C")
+    if wind_speed is not None:
+        parts.append(f"wind {wind_speed} mph")
+    if precip_prob is not None:
+        parts.append(f"{precip_prob}% chance of precipitation")
+    parts.append(f"at {time_str}.")
+
+    return ", ".join(parts[:-1]) + " " + parts[-1]
+
 class MetOfficeScraper(BaseScraper):
     domain = "weather"
     source_name = "Met Office"
@@ -118,26 +141,9 @@ class MetOfficeScraper(BaseScraper):
                 break
 
             time_str = entry.get("time", "")
-            temp = entry.get("screenTemperature")
-            wx_code = entry.get("significantWeatherCode")
-            wind_speed = entry.get("windSpeed10m")
-            precip_prob = entry.get("probOfPrecipitation")
-
             if not time_str:
                 continue
-
-            condition = WX_CODES.get(wx_code, "Unknown conditions") if wx_code is not None else "Variable conditions"
-
-            parts = [f"Met Office forecast for Newcastle upon Tyne: {condition}"]
-            if temp is not None:
-                parts.append(f"{temp}°C")
-            if wind_speed is not None:
-                parts.append(f"wind {wind_speed} mph")
-            if precip_prob is not None:
-                parts.append(f"{precip_prob}% chance of precipitation")
-            parts.append(f"at {time_str}.")
-
-            evidence = ", ".join(parts[:-1]) + " " + parts[-1]
+            evidence = format_forecast_evidence(entry)
 
             items.append(EvidenceItem(
                 item_id=self._next_id(),
