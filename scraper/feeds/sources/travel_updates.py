@@ -4,14 +4,25 @@ The site gives no stable id, so the native id is a hash of title+body; `effectiv
 strings ("Mon 22 Sep, 9am") parsed best-effort into UTC instants relative to the capture year; when they cannot
 be parsed, valid_from falls back to the fetch time, so record_ids are per version, not per notice.
 
-An item is a notice across edits: versions that share their title or their body (whitespace and case ignored) are
-one notice. Versions sharing a title never co-exist on the page, so a shared title is an edit or a re-post. A
-notice whose title and body both change in one edit is not linked."""
+An item is a notice across edits. Two lineage rules, chosen per build (`{"travel_updates": {"rule": ...}}`):
+
+* `p5` (default; Oliver, 3 Nov 2026). A version is linked to an earlier one when
+  (a) their bodies are identical (whitespace and case ignored), at any time: the same evidence text was already seen; or
+  (b) the earlier version left the page in the capture just before this one appeared, or at most `window_h` (8) hours
+      before, and the two are similar (title similarity >= 0.75 or body similarity >= 0.5, difflib ratio) and either
+      keep the same title or share a place (lexicon hit, or neither has one), the page's notice type and, unless both
+      are live updates, the same effective-from text.
+  Status updates on an incident (suspended -> resumed) are linked by the same rule. The site reuses generic titles
+  ("Service suspension") for unrelated incidents days apart, so a shared title alone does not link.
+* `title_or_body` (the rule of 2 Nov): versions sharing a title or a body at any time are one notice.
+
+DATA_DICTIONARY.md of the held-out export records the 158-pair check behind `p5`."""
 from __future__ import annotations
 
 import hashlib
 import re
 from datetime import datetime, timezone
+from difflib import SequenceMatcher
 from typing import Any, Optional
 
 from ..base import Adapter, iso_utc, load_json, register
@@ -48,6 +59,37 @@ def parse_human_datetime(s: Optional[str], year_hint: int) -> Optional[str]:
         return None
 
 
+LINK_RULES = ("p5", "title_or_body")
+
+
+def _norm(v: Any) -> str:
+    return re.sub(r"\s+", " ", str(v or "")).strip().lower()
+
+
+def _rule(opts: Optional[dict]) -> str:
+    rule = (opts or {}).get("rule", "p5")
+    if rule not in LINK_RULES:
+        raise ValueError(f"unknown travel_updates lineage rule {rule!r}; one of {LINK_RULES}")
+    return rule
+
+
+def _features(r: EvidenceRecord) -> dict:
+    s = r.structured
+    return {"title": _norm(s.get("title")), "body": _norm(s.get("body")), "type": (s.get("hints") or {}).get("data-types"),
+            "from": _norm(s.get("effective_from")), "places": set(place_hits(r.text or ""))}
+
+
+def _p5_similar(a: dict, b: dict) -> bool:
+    """P5 part (b) without the timing: similar text, and the same title or the same place, notice type and date span."""
+    if not (SequenceMatcher(None, a["title"], b["title"]).ratio() >= 0.75 or SequenceMatcher(None, a["body"], b["body"]).ratio() >= 0.5):
+        return False
+    if a["title"] and a["title"] == b["title"]:
+        return True
+    same_place = bool(a["places"] & b["places"]) or (not a["places"] and not b["places"])
+    same_span = a["type"] == "live-update" or bool(a["from"] and a["from"] == b["from"])
+    return same_place and a["type"] == b["type"] and same_span
+
+
 class TravelUpdatesAdapter(Adapter):
     source = "travel_updates"
     reliability_hint = "official_operator"
@@ -80,10 +122,37 @@ class TravelUpdatesAdapter(Adapter):
                 reliability_hint=self.reliability_hint, provenance=self.provenance(meta)))
         return out
 
-    def lineage_keys(self, record: EvidenceRecord) -> list[str]:
-        norm = lambda v: re.sub(r"\s+", " ", str(v or "")).strip().lower()
-        title, body = norm(record.structured.get("title")), norm(record.structured.get("body"))
-        return [k for k in ((f"title:{title}" if title else ""), (f"body:{body}" if body else "")) if k] or [record.record_id]
+    def lineage_keys(self, record: EvidenceRecord, opts: Optional[dict] = None) -> list[str]:
+        title, body = _norm(record.structured.get("title")), _norm(record.structured.get("body"))
+        keys = [f"body:{body}" if body else ""]
+        if _rule(opts) == "title_or_body":
+            keys.append(f"title:{title}" if title else "")
+        return [k for k in keys if k] or [record.record_id]
+
+    def lineage_links(self, records: list[EvidenceRecord], captures: list[tuple[str, str]], opts: Optional[dict] = None):
+        if _rule(opts) != "p5":
+            return
+        window_s = float((opts or {}).get("window_h", 8)) * 3600
+        caps = sorted(set(captures) | {(r.fetched_at or "", r.provenance.get("file") or "") for r in records})
+        idx = {c: i for i, c in enumerate(caps)}
+        when = [datetime.strptime(at, "%Y-%m-%dT%H:%M:%SZ") if at else None for at, _ in caps]
+        versions: dict[str, dict] = {}                 # native_id -> first/last capture index and one record
+        for r in records:
+            i = idx[(r.fetched_at or "", r.provenance.get("file") or "")]
+            v = versions.setdefault(r.native_id or r.record_id, {"first": i, "last": i, "rec": r})
+            v["first"], v["last"] = min(v["first"], i), max(v["last"], i)
+        order = sorted(versions.values(), key=lambda v: v["first"])
+        feats = {id(v): _features(v["rec"]) for v in order}
+        for n, v in enumerate(order):
+            i = v["first"]
+            for m in order[:n]:
+                if m["first"] >= i or m["last"] >= i:       # not earlier, or still on the page: another notice
+                    continue
+                gone_just_before = m["last"] == i - 1
+                if not gone_just_before and not (when[i] and when[m["last"]] and (when[i] - when[m["last"]]).total_seconds() <= window_s):
+                    continue
+                if _p5_similar(feats[id(m)], feats[id(v)]):
+                    yield m["rec"], v["rec"]
 
 
 register(TravelUpdatesAdapter())

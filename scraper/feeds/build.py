@@ -55,11 +55,13 @@ def iter_payloads(root: Path, sources: Optional[set[str]] = None, since: Optiona
 
 
 def build_records(root: Path, sources: Optional[set[str]] = None, since: Optional[str] = None, until: Optional[str] = None,
-                  errors: Optional[list] = None) -> list[EvidenceRecord]:
+                  errors: Optional[list] = None, lineage: Optional[dict] = None) -> list[EvidenceRecord]:
+    """`lineage`: per-source lineage options for `assign_lineage`, e.g. {"travel_updates": {"rule": "p5"}}."""
     reg = adapters()
     out: list[EvidenceRecord] = []
     by_uri: dict[str, EvidenceRecord] = {}
     pending_dupes: list[tuple[str, dict]] = []
+    captures: dict[str, list[tuple[str, str]]] = defaultdict(list)   # every usable capture, even one with no records
     for payload, meta in iter_payloads(root, sources, since, until):
         adapter = reg.get(meta["source"])
         if adapter is None or not adapter.accepts(meta):
@@ -73,6 +75,7 @@ def build_records(root: Path, sources: Optional[set[str]] = None, since: Optiona
             if errors is not None:
                 errors.append({"file": meta.get("file"), "error": repr(e)})
             continue
+        captures[meta["source"]].append((adapter.fetched_at(meta) or "", meta.get("file") or ""))
         for r in recs:
             if r.source == "bluesky" and r.native_id:
                 if r.native_id in by_uri:          # same post captured by another strategy in this window
@@ -90,7 +93,7 @@ def build_records(root: Path, sources: Optional[set[str]] = None, since: Optiona
             if uri not in by_uri:
                 errors.append({"file": meta.get("file"), "error": f"unresolved dupe {uri}"})
     enrich(out)
-    assign_lineage(out, reg)
+    assign_lineage(out, reg, lineage, captures)
     out.sort(key=lambda r: (r.source, r.valid_from or "", r.record_id))
     return out
 
@@ -175,13 +178,15 @@ def main(argv: Optional[list[str]] = None) -> int:
         p.add_argument("--since")
         p.add_argument("--until")
         p.add_argument("--source", action="append")
+        p.add_argument("--travel-rule", choices=("p5", "title_or_body"), default="p5", help="travel_updates lineage rule")
         if name == "build":
             p.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     errors: list = []
     if a.since:
         print(f"note: first_seen counts only captures from {a.since}; build without --since for eligibility", file=sys.stderr)
-    recs = build_records(Path(a.root), set(a.source) if a.source else None, a.since, a.until, errors)
+    recs = build_records(Path(a.root), set(a.source) if a.source else None, a.since, a.until, errors,
+                         lineage={"travel_updates": {"rule": a.travel_rule}})
     if a.cmd == "build":
         n = write_jsonl(recs, Path(a.out))
         print(f"wrote {n} records to {a.out}")

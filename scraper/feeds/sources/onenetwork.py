@@ -72,7 +72,7 @@ class OneNetworkAdapter(Adapter):
                 native_id=str(first(p, "work_ref", "id", default="")) or None, reliability_hint=self.reliability_hint, provenance=self.provenance(meta)))
         return out
 
-    def lineage_keys(self, record: EvidenceRecord) -> list[str]:
+    def lineage_keys(self, record: EvidenceRecord, opts: Optional[dict] = None) -> list[str]:
         s = record.structured
         return [f"{k}:{s[k]}" for k in ("works_ref", "id") if s.get(k) not in (None, "")] or [record.record_id]
 

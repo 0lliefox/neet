@@ -222,11 +222,38 @@ def _write_capture(root: Path, source: str, tag: str, fetched_at: str, body: dic
 class LineageTests(unittest.TestCase):
     """First-seen is per published item, never per version or fetch time."""
 
-    def _build(self, source, tag, captures):
+    def _build(self, source, tag, captures, lineage=None):
         with tempfile.TemporaryDirectory() as tmp:
             for at, body in captures:
                 _write_capture(Path(tmp), source, tag, at, body)
-            return build_records(Path(tmp), {source})
+            return build_records(Path(tmp), {source}, lineage=lineage)
+
+    def test_p5_does_not_link_a_reused_generic_title_after_a_gap(self):
+        u = lambda body: {"title": "Service suspension", "body": body, "hints": {"data-types": "live-update"}}
+        caps = [("2026-10-01T09:00:00+00:00", {"updates": [u("No trains between Heworth and Pelaw.")]}),
+                ("2026-10-01T12:00:00+00:00", {"updates": []}),
+                ("2026-10-04T09:00:00+00:00", {"updates": [u("No trains between Jarrow and Bede.")]})]
+        p5 = self._build("travel_updates", "updates", caps)
+        self.assertEqual(len({r.item_key for r in p5}), 2)
+        old = self._build("travel_updates", "updates", caps, lineage={"travel_updates": {"rule": "title_or_body"}})
+        self.assertEqual(len({r.item_key for r in old}), 1)
+
+    def test_p5_links_a_rewrite_that_replaces_the_old_notice(self):
+        live = {"data-types": "live-update"}
+        caps = [("2026-10-01T09:00:00+00:00", {"updates": [{"title": "Metro service suspension", "hints": live,
+                                                            "body": "Service is suspended between Wallsend and Monkseaton due to a signalling issue."}]}),
+                ("2026-10-01T09:10:00+00:00", {"updates": [{"title": "Suspension - Wallsend to Monkseaton", "hints": live,
+                                                            "body": "Service remains suspended between Wallsend and Monkseaton due to a signalling issue."}]}),
+                # re-posted 6 h after it went: same notice; a different notice 10 h later is new
+                ("2026-10-01T10:00:00+00:00", {"updates": []}),
+                ("2026-10-01T16:00:00+00:00", {"updates": [{"title": "Suspension - Wallsend to Monkseaton", "hints": live,
+                                                            "body": "Service is still suspended between Wallsend and Monkseaton."}]}),
+                ("2026-10-01T17:00:00+00:00", {"updates": []}),
+                ("2026-10-02T03:00:00+00:00", {"updates": [{"title": "Suspension - Wallsend to Monkseaton", "hints": live,
+                                                            "body": "Service is suspended between Wallsend and Monkseaton after a power failure."}]})]
+        recs = self._build("travel_updates", "updates", caps)
+        firsts = sorted({(r.first_seen, r.item_key) for r in recs})
+        self.assertEqual([f for f, _ in firsts], ["2026-10-01T09:00:00Z", "2026-10-02T03:00:00Z"])
 
     def test_travel_notice_without_dates_keeps_one_key_across_captures(self):
         u = {"title": "Lift out of service", "body": "Use the stairs.", "effective_from": None}

@@ -38,10 +38,17 @@ class Adapter:
     def records(self, body: bytes, meta: dict[str, Any]) -> list[EvidenceRecord]:  # pragma: no cover - abstract
         raise NotImplementedError
 
-    def lineage_keys(self, record: EvidenceRecord) -> list[str]:
+    def lineage_keys(self, record: EvidenceRecord, opts: Optional[dict] = None) -> list[str]:
         """Identifiers that mark two records as versions of one published item (see `lineage.py`). Never derived
-        from fetch time. Default: the record itself."""
+        from fetch time. Default: the record itself. `opts` are this source's lineage options from the build."""
         return [record.record_id]
+
+    def lineage_links(self, records: list[EvidenceRecord], captures: list[tuple[str, str]],
+                      opts: Optional[dict] = None) -> Iterable[tuple[EvidenceRecord, EvidenceRecord]]:
+        """Pairs of this source's records that are versions of one item for reasons no single record carries
+        (e.g. one replaced the other on the page). `captures` lists every (fetched_at, file) of the source in the
+        build, including captures that yielded no records. Default: none."""
+        return ()
 
     def coverage_extension(self, record: EvidenceRecord) -> Optional[str]:
         """Name of the coverage extension this record came through (e.g. a newly added map tile), or None. An
