@@ -52,6 +52,9 @@ class EvidenceRecord:
     # however often its text or dates change, `first_seen` is the earliest capture of any version of it.
     item_key: str = ""
     first_seen: Optional[str] = None
+    # True when the item was first seen only because coverage was widened (e.g. a new onenetwork tile's first
+    # capture): it existed before then, so it is never eligible as first-seen-after-the-tag.
+    baseline: bool = False
 
     def __post_init__(self) -> None:
         if self.kind not in KINDS:

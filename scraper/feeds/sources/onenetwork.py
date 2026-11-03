@@ -4,10 +4,13 @@ kept when the capture stores it — see `RoadworksScraper._iter_tile_features`; 
 
 The native id stays the tile feature `id` (record_ids are unchanged), but an item is the works: its `works_ref`
 (one works can carry several feature ids, e.g. a permit variation) and its feature `id`, which survives a
-rescheduled start date. Features without a works_ref are keyed by id alone."""
+rescheduled start date. Features without a works_ref are keyed by id alone.
+
+Tiles added to the capture grid after it started are listed in ADDED_TILES: works first seen in a new tile's first
+capture already existed, so they are baseline items, never eligible."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 from ..base import Adapter, first, iso_utc, load_json, register
 from ..geo import wkt_to_geojson
@@ -35,6 +38,10 @@ def render(p: dict[str, Any]) -> str:
     if end:
         parts.append(f"Work expected to end {str(end)[:10]}.")
     return " ".join(x for x in parts if x)
+
+
+# z/x/y of tiles added to `capture.sources.onenetwork.tiles` after 20 Sep 2026, with the date they were added
+ADDED_TILES = {"10/507/325": "2026-11-03"}   # Durham city centre (Oliver, 3 Nov)
 
 
 class OneNetworkAdapter(Adapter):
@@ -68,6 +75,10 @@ class OneNetworkAdapter(Adapter):
     def lineage_keys(self, record: EvidenceRecord) -> list[str]:
         s = record.structured
         return [f"{k}:{s[k]}" for k in ("works_ref", "id") if s.get(k) not in (None, "")] or [record.record_id]
+
+    def coverage_extension(self, record: EvidenceRecord) -> Optional[str]:
+        tile = record.structured.get("_tile")
+        return f"tile:{tile}" if tile in ADDED_TILES else None
 
 
 register(OneNetworkAdapter())

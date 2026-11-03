@@ -24,7 +24,7 @@ class OneNetworkSource(CaptureSource):
 
     def fetch(self, ctx: Context) -> list[Payload]:
         from scraper.scrapers.roadworks import RoadworksScraper  # reuse tile logic
-        scraper = RoadworksScraper(max_items=10000)
+        scraper = RoadworksScraper(max_items=10000, tiles=self.cfg.get("tiles"))
         feats = []
         fetch_raw = getattr(scraper, "fetch_tile_features", None)
         if fetch_raw is None:

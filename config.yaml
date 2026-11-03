@@ -228,7 +228,9 @@ capture:
              # tag. Set `after` to the tag time (UTC) and the Durham months are fetched once more and stored as dated proof.
              recapture: {after: null, points: [durham]}}
     streetmanager_archive: {cadence_s: 86400, kinds: [permit, activity, section_58], min_key_year: 2026, max_downloads_per_run: 2}
-    onenetwork: {cadence_s: 86400}
+    # tiles: z10 x/y; the default six cover Newcastle to ~54.78N. (507, 325) added 3 Nov 2026 for Durham city centre
+    # (Oliver); its first capture is a baseline, never eligible (feeds/sources/onenetwork.py ADDED_TILES)
+    onenetwork: {cadence_s: 86400, tiles: [[507, 323], [507, 324], [506, 323], [506, 324], [508, 323], [508, 324], [507, 325]]}
     bluesky: {cadence_s: 1800, s3_max_authors: 600}
     travel_updates: {cadence_s: 600}   # every launchd tick: held-out transport slice, eligibility is first-seen and 1 in 5 notices lasts <= 2 h
     fixmystreet: {cadence_s: 21600, lookback_days: 7, bodies: {newcastle: 2529}}   # other Tyne and Wear body ids to be confirmed

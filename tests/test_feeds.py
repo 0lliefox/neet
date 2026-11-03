@@ -269,6 +269,15 @@ class LineageTests(unittest.TestCase):
         self.assertEqual({r.first_seen for r in recs if r.structured["id"] == 3}, {"2026-10-02T10:00:00Z"})
         self.assertEqual({r.structured["works_ref"] for r in recs if r.structured["id"] == 1}, {"NE001"})
 
+    def test_works_first_seen_in_a_new_tiles_first_capture_are_baseline(self):
+        f = lambda id_, tile: {"id": id_, "works_ref": f"W{id_}", "start_date": "2026-11-01T00:00:00", "end_date": "2026-12-01T00:00:00",
+                               "works_desc": "x", "road_name": "A Road", "pub_name": "Durham", "_tile": tile}
+        caps = [("2026-11-02T10:00:00+00:00", {"features": [f(1, "10/507/324")]}),
+                ("2026-11-03T10:00:00+00:00", {"features": [f(1, "10/507/324"), f(2, "10/507/324"), f(3, "10/507/325")]}),   # tile added
+                ("2026-11-04T10:00:00+00:00", {"features": [f(3, "10/507/325"), f(4, "10/507/325")]})]
+        recs = {r.structured["id"]: r for r in self._build("onenetwork", "tiles", caps)}
+        self.assertEqual({i: recs[i].baseline for i in (1, 2, 3, 4)}, {1: False, 2: False, 3: True, 4: False})
+        self.assertEqual(recs[4].first_seen, "2026-11-04T10:00:00Z")
 
 if __name__ == "__main__":
     unittest.main()

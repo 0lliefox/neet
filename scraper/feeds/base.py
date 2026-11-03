@@ -43,6 +43,11 @@ class Adapter:
         from fetch time. Default: the record itself."""
         return [record.record_id]
 
+    def coverage_extension(self, record: EvidenceRecord) -> Optional[str]:
+        """Name of the coverage extension this record came through (e.g. a newly added map tile), or None. An
+        item first seen in the first capture of an extension is a baseline item (see `lineage.py`)."""
+        return None
+
     # -- helpers shared by adapters -------------------------------------------------
     def provenance(self, meta: dict[str, Any]) -> dict[str, Any]:
         return {k: meta.get(k) for k in ("file", "sha256", "url", "tag", "source") if meta.get(k) is not None}
