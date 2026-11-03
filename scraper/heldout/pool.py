@@ -9,7 +9,7 @@ first captured inside the window, and then removed by the exclusions in this ord
   baseline      first seen only because coverage was widened (a new onenetwork tile's first capture)
   street_manager  onenetwork works whose works_ref has a Street Manager permit event before the window start
   not_renderable  CURB's formatter cannot render it (no road name or description, page HTML missing, ...)
-  too_long      rendered evidence longer than `max_evidence_chars` (off by default; dropped, never cut)
+  too_long      rendered evidence longer than `max_evidence_chars` (400; dropped whole, never cut)
 
 Crime is per month: a Newcastle record is eligible only when its month was first captured inside the window;
 Durham months already captured are eligible (`durham_crime_all_captured`, Oliver 3 Nov, pending Ellis)."""
@@ -47,7 +47,9 @@ class Settings:
     durham_crime_all_captured: bool = True    # Oliver 3 Nov, pending Ellis
     street_manager: bool = True               # Oliver 3 Nov
     durham_roadworks_url: str = "https://www.durham.gov.uk/roadworks"   # the council's roadworks page (loads, 3 Nov)
-    max_evidence_chars: Optional[int] = None  # drop longer items, never cut (Oliver 3 Nov); off until he picks a value
+    # drop longer items whole, never cut (Oliver 3 Nov): 400 is nearest the range LaSSI was developed on (CURB's
+    # longest evidence is 309 characters); set by the LaSSI v4.4 session on Oliver's behalf, 3 Nov
+    max_evidence_chars: Optional[int] = 400
 
 
 def slice_of(rec: dict) -> Optional[tuple[str, str]]:
@@ -91,15 +93,35 @@ def load_dev(path: Path) -> set[str]:
 _SM_NAME = re.compile(r"^(?:.*/)?(.+)-\d+_[a-z0-9_]+?_(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})-(\d{2})")
 
 
+def local_header_names(path: Path) -> list[str]:
+    """Member names of a zip whose central directory is missing (a truncated archive), read from the local file
+    headers that precede each member (signature PK\\x03\\x04, name length at offset 26, name at offset 30)."""
+    data = path.read_bytes()
+    names, i = [], data.find(b"PK\x03\x04")
+    while i != -1 and i + 30 <= len(data):
+        n = int.from_bytes(data[i + 26:i + 28], "little")
+        name = data[i + 30:i + 30 + n].decode("utf-8", errors="replace")
+        if _SM_NAME.match(name):
+            names.append(name)
+        i = data.find(b"PK\x03\x04", i + 30 + n)
+    return names
+
+
 def street_manager_first_events(root: Path, refs: set[str], report: Optional[dict] = None) -> dict[str, str]:
     """Earliest Street Manager permit event per works reference, read from the monthly permit archives' member names
     (`<permit_ref>_<event>_<YYYY-MM-DD_HH-MM-SS>...json`; the works reference is the permit reference without its
-    `-NN` suffix). Unreadable archives are skipped and listed in `report["unreadable"]`."""
+    `-NN` suffix). An archive without a central directory (the published June 2026 one is truncated) is read from
+    its local headers and listed in `report["from_local_headers"]`; one that cannot be read at all is skipped and
+    listed in `report["unreadable"]`."""
     first: dict[str, str] = {}
     for z in sorted((root / "capture" / "streetmanager_archive").glob("*/*_permit_*.zip")):
         try:
             names = zipfile.ZipFile(z).namelist()
-        except (zipfile.BadZipFile, OSError):
+        except zipfile.BadZipFile:
+            names = local_header_names(z)
+            if report is not None:
+                report.setdefault("from_local_headers", []).append(f"{z.name}: {len(names)} names")
+        except OSError:
             if report is not None:
                 report.setdefault("unreadable", []).append(z.name)
             continue
