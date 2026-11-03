@@ -70,7 +70,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--no-durham-crime-all-captured", action="store_true", help="Durham months only when served in the window")
     p.add_argument("--no-street-manager", action="store_true")
     p.add_argument("--durham-roadworks-url", default=Settings.durham_roadworks_url)
-    p.add_argument("--transport-max-chars", type=int)
+    p.add_argument("--max-evidence-chars", type=int, help="drop items whose rendered evidence is longer (never cut); off by default")
     for name in ("sample", "claims"):
         p = sub.add_parser(name, help={"sample": "02: seeded stratified draw", "claims": "03: claim sheet, strategies drawn"}[name])
         p.add_argument("--seed", type=int, required=True)
@@ -97,7 +97,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     elif a.stage == "pool":
         settings = Settings(window_start=a.window_start, window_end=a.window_end,
                             durham_crime_all_captured=not a.no_durham_crime_all_captured, street_manager=not a.no_street_manager,
-                            durham_roadworks_url=a.durham_roadworks_url, transport_max_chars=a.transport_max_chars)
+                            durham_roadworks_url=a.durham_roadworks_url, max_evidence_chars=a.max_evidence_chars)
         records = out / STAGE_FILES["records"]
         rows, report = build_pool(records, Path(a.root), settings, Path(a.curb).expanduser(), Path(a.dev).expanduser())
         path = out / STAGE_FILES["pool"]

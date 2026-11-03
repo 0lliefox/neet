@@ -164,8 +164,8 @@ DATA_DICTIONARY = """# Data dictionary: held-out evidence set
 | `evidence_text` | rendered evidence (templates below) |
 | `source_name` | `Newcastle City Council Roadworks`, `Durham County Council Roadworks`, `Police.uk`, `Met Office`, `Nexus Metro Updates` |
 | `source_page` | `Roadworks in <City> Map (One.Network)`, `Street-level crime data`, `<Place> Hourly Forecast`, `Metro Live Travel News` |
-| `source_url` | CURB's URLs for Newcastle. Durham weather: the Met Office forecast page addressed by the geohash of 54.7765, -1.5757. Durham roadworks: a setting (OPEN; CURB has no Durham page). |
-| `date_time` | the record's own time as written, UK local time with its offset (in the window UK time is UTC): roadworks `start_date`; crime `<month>-01T00:00:00+00:00`; weather the forecast step's `time` (`YYYY-MM-DDTHH:MMZ`, as CURB); transport the notice's "Effective from" (without one: when it was first captured) |
+| `source_url` | CURB's URLs for Newcastle. Durham: the public pages, checked to load on 3 Nov 2026: `https://weather.metoffice.gov.uk/forecast/gcwzefp2c` ("Durham (Durham) weather") and `https://www.durham.gov.uk/roadworks` (Durham County Council, "Find out about roadworks in your area"). LaSSI does not read this column. |
+| `date_time` | the record's own time as written, UK local time with its offset (in the window UK time is UTC): roadworks `start_date`; crime `<month>-01T00:00:00+00:00`; weather the forecast step's `time` (`YYYY-MM-DDTHH:MMZ`, as CURB); transport the notice's "Last updated" (Oliver, 3 Nov; without one, the item's `first_seen`, counted as `date_time_fallback` in the pool sidecar) |
 | `location` | roadworks `road_name`; crime Police.uk's map-point label verbatim (`On or near ...`); weather the canonical place; transport the first Metro station named (v1 `_extract_location`, else `Tyne and Wear Metro`) |
 | `claim_text`, `label`, `claim_type` | empty until Oliver writes the claims; label fixed by slot (S Supported, R Refuted, N Not Enough Evidence), claim_type = the drawn strategy |
 | `city` | `newcastle` or `durham` |
@@ -195,7 +195,9 @@ Exclusions, applied in this order and counted in `pool.csv.meta.json`:
 of the 40 record_ids in official_sample.json); `baseline` (first seen in the first capture of a newly added
 onenetwork tile, i.e. tile 10/507/325 added 3 Nov 2026 for Durham city centre); `street_manager` (onenetwork works
 whose `works_ref` has a Street Manager permit event before the window start, read from the monthly permit
-archives' member names, so a works first published while a tile was down is not new); `not_renderable`.
+archives' member names, so a works first published while a tile was down is not new); `not_renderable`;
+`too_long` (rendered evidence longer than `max_evidence_chars` characters: the item is dropped, never cut; Oliver,
+3 Nov: only notices reasonable to parse as full sentences. Off by default; the value used is in the pool sidecar).
 
 ## Lineage: what counts as one item
 
@@ -248,8 +250,8 @@ Wording reuses the v1 (CURB) formatters with the city as a parameter (`scraper/s
   A description ending in "." gives "..", as in CURB.
 - **Crime** (`PoliceScraper._format_api_evidence`): `{Category} recorded on {Street Title-Cased}, {City}, in {Month
   YYYY}.[ Outcome: {outcome}.]` CURB's `location` is title-cased like its sentence ("On Or Near Haymarket"); the
-  export keeps Police.uk's label verbatim ("On or near Haymarket") as the 20 Oct brief requires for LaSSI v4.4's
-  curated arm. OPEN: confirm, since it differs from CURB.
+  export keeps Police.uk's label verbatim ("On or near Haymarket") as the 20 Oct brief requires (confirmed 3 Nov:
+  LaSSI v4.4's curated arm strips "on or near" ignoring case and compares names in lower case).
 - **Weather** (`format_forecast_evidence`): `Met Office forecast for {Place}: {condition}, {temp}°C, wind {wind}
   mph, {pop}% chance of precipitation at {time}.` with canonical places "Newcastle upon Tyne" and "Durham". As in
   CURB, `wind` is the DataHub's `windSpeed10m`, which is in m/s, printed with the label "mph". OPEN: keep CURB's
@@ -258,9 +260,9 @@ Wording reuses the v1 (CURB) formatters with the city as a parameter (`scraper/s
   shows it, then the body, each line break ending a sentence:
   `{heading}. Effective from: {from}. [Effective until: {until}.] {body line 1}. {body line 2}. ...`
   Lines that are only a link (timetable PDFs, "For more details") are left out. CURB's v1 text glued the heading
-  onto the body, joined the body's lines with spaces and cut at 250 characters, sometimes mid-sentence. No cut by
-  default; with `--transport-max-chars` the text is cut at a sentence end. The page's "Effective from" also gives
-  `date_time`.
+  onto the body, joined the body's lines with spaces and cut at 250 characters, sometimes mid-sentence. Evidence
+  is never cut (Oliver, 3 Nov); `max_evidence_chars` drops long items instead. All notices on the page are in
+  scope, bus and ferry notices included (Oliver, 3 Nov); the domain stays `transport`.
 
 ## Template check against CURB (5 items per domain, `neet heldout docs`)
 

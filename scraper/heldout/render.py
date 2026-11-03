@@ -27,22 +27,7 @@ SOURCE_NAMES = {
 }
 CITY_LABEL = {"newcastle": "Newcastle", "durham": "Durham"}
 WEATHER_PLACE = {"newcastle": "Newcastle upon Tyne", "durham": "Durham"}    # canonical; the DataHub says "Newcastle Upon Tyne"
-DURHAM_POINT = (54.7765, -1.5757)
-
-
-def geohash(lat: float, lon: float, precision: int = 9) -> str:
-    """Standard geohash (the Met Office forecast pages are addressed by one; Newcastle's is CURB's gcybg0rne)."""
-    alphabet = "0123456789bcdefghjkmnpqrstuvwxyz"
-    lat_r, lon_r, bits, out, even, ch = [-90.0, 90.0], [-180.0, 180.0], 0, [], True, 0
-    while len(out) < precision:
-        r, v = (lon_r, lon) if even else (lat_r, lat)
-        mid = (r[0] + r[1]) / 2
-        ch = (ch << 1) | (v >= mid)
-        r[0 if v >= mid else 1] = mid
-        even, bits = not even, bits + 1
-        if bits == 5:
-            out.append(alphabet[ch]); bits, ch = 0, 0
-    return "".join(out)
+MET_OFFICE_DURHAM_URL = "https://weather.metoffice.gov.uk/forecast/gcwzefp2c"   # "Durham (Durham) weather", loads (3 Nov)
 
 
 def as_local_iso(utc_or_local: Optional[str], local_clock: bool) -> Optional[str]:
@@ -90,7 +75,7 @@ def weather(rec: dict, city: str) -> Optional[dict[str, str]]:
     if not s.get("time"):
         return None
     place = WEATHER_PLACE[city]
-    url = METOFFICE_NEWCASTLE_URL if city == "newcastle" else f"https://weather.metoffice.gov.uk/forecast/{geohash(*DURHAM_POINT)}"
+    url = METOFFICE_NEWCASTLE_URL if city == "newcastle" else MET_OFFICE_DURHAM_URL
     return {"evidence_text": format_forecast_evidence(s, place), "source_name": SOURCE_NAMES[("weather", city)],
             "source_page": f"{place} Hourly Forecast", "source_url": url, "date_time": str(s["time"]), "location": place}
 
@@ -133,24 +118,16 @@ def sentence(line: str) -> str:
     return line if _END.search(line) else line + "."
 
 
-def transport_text(parts: dict[str, Any], max_chars: Optional[int] = None) -> str:
-    """Heading, then the date span as the page shows it, then the body, each line break ending a sentence. Cut only
-    at a sentence end, and only when `max_chars` is set."""
+def transport_text(parts: dict[str, Any]) -> str:
+    """Heading, then the date span as the page shows it, then the body, each line break ending a sentence. Never cut
+    (Oliver, 3 Nov): a notice too long to use is dropped by the pool's `max_evidence_chars`, not shortened."""
     out = [sentence(parts["title"])] if parts["title"] else []
     if parts.get("from"):
         out.append(sentence(f"Effective from: {parts['from']}"))
     if parts.get("until"):
         out.append(sentence(f"Effective until: {parts['until']}"))
     out += [sentence(l) for l in parts["lines"]]
-    text = " ".join(out)
-    if max_chars and len(text) > max_chars:
-        kept, n = [], 0
-        for sent in re.split(r"(?<=[.!?])\s+", text):
-            if kept and n + len(sent) + 1 > max_chars:
-                break
-            kept.append(sent); n += len(sent) + 1
-        text = " ".join(kept)
-    return text
+    return " ".join(out)
 
 
 def page_time(text: Optional[str], year_hint: int) -> Optional[str]:
@@ -165,13 +142,17 @@ def page_time(text: Optional[str], year_hint: int) -> Optional[str]:
         return as_local_iso(local, local_clock=True) if local else None
 
 
-def transport(rec: dict, parts: Optional[dict], max_chars: Optional[int] = None) -> Optional[dict[str, str]]:
+def transport(rec: dict, parts: Optional[dict]) -> Optional[dict[str, str]]:
+    """`date_time` is the notice's "Last updated" as written (UK local, with its offset; Oliver 3 Nov); without one,
+    the item's first_seen. `date_time_fallback` says which was used."""
     if not parts or not (parts["title"] or parts["lines"]):
         return None
-    text = transport_text(parts, max_chars)
+    text = transport_text(parts)
     s = rec["structured"]
-    # the notice's own effective-from, a UK local time as written; without one, when it was first captured
-    when = page_time(s.get("effective_from"), int((rec.get("fetched_at") or "2026")[:4])) \
-        or as_local_iso(rec.get("fetched_at"), local_clock=False)
+    when = page_time(s.get("last_updated"), int((rec.get("fetched_at") or "2026")[:4]))
+    fallback = when is None
+    if fallback:
+        when = as_local_iso(rec.get("first_seen") or rec.get("fetched_at"), local_clock=False)
     return {"evidence_text": text, "source_name": SOURCE_NAMES[("transport", "newcastle")], "source_page": "Metro Live Travel News",
-            "source_url": NEXUS_URL, "date_time": when or "", "location": _extract_location(" ".join([parts["title"], *parts["lines"]]))}
+            "source_url": NEXUS_URL, "date_time": when or "", "location": _extract_location(" ".join([parts["title"], *parts["lines"]])),
+            "date_time_fallback": fallback}

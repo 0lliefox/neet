@@ -45,12 +45,12 @@ NOTICE = """<div class="update-post wysiwyg p-4" data-transport="metro" data-typ
  <div class="text-dark-teal flex items-center gap-2 font-bold"><span>Effective from: {frm}</span></div>
  <div class="mt-4"><p>{body1}<br/>{body2}</p><p><a href="https://example.org/x.pdf">View the timetable</a></p>
  <p><a href="https://travelnortheast.uk/">For more details</a></p></div>
- <span class="text-dark-teal mb-4 mt-8 block font-bold">Last updated: {frm}</span></div>"""
+ <span class="text-dark-teal mb-4 mt-8 block font-bold">Last updated: {upd}</span></div>"""
 
 
 def _travel(root: Path, at: str, notices: list[dict]) -> None:
     from scraper.capture.sources.travel_updates import parse_updates
-    html = "<html><body>" + "".join(NOTICE.format(**n) for n in notices) + "</body></html>"
+    html = "<html><body>" + "".join(NOTICE.format(**{"upd": n["frm"], **n}) for n in notices) + "</body></html>"
     _put(root, "travel_updates", at, "page", html, "html")
     ups = [{k: v for k, v in u.items() if k != "html"} for u in parse_updates(html)]
     _put(root, "travel_updates", at, "updates", {"url": "x", "updates": ups})
@@ -90,7 +90,8 @@ def store(tmp_path: Path) -> Path:
     _travel(root, "2026-10-10T08:05:00Z", [old])
     _travel(root, "2026-10-20T08:05:00Z", [{**old, "body2": "Engineers are on site"},
                                            {"type": "planned-work", "title": "Line closure Pelaw to South Shields", "frm": "24 Oct 2026, 05:00",
-                                            "body1": "No trains will run between Pelaw and South Shields", "body2": "Replacement buses will run"}])
+                                            "body1": "No trains will run between Pelaw and South Shields", "body2": "Replacement buses will run",
+                                            "upd": "19 Oct 2026, 16:40"}])
     # weather: two runs per city in the window, one before
     for at, run in (("2026-10-10T09:00:00Z", "2026-10-10T08:00Z"), ("2026-10-20T09:00:00Z", "2026-10-20T08:00Z"), ("2026-10-20T10:00:00Z", "2026-10-20T09:00Z")):
         _put(root, "metoffice_hourly", at, "hourly_newcastle", _forecast(run, "Newcastle Upon Tyne"))
@@ -150,7 +151,7 @@ def test_pool_eligibility_and_every_exclusion(tmp_path, store, dev):
     tr = keys[("transport", "newcastle")]
     assert len(tr) == 1 and tr[0]["evidence_text"] == ("Line closure Pelaw to South Shields. Effective from: 24 Oct 2026, 05:00. "
                                                        "No trains will run between Pelaw and South Shields. Replacement buses will run.")
-    assert tr[0]["date_time"] == "2026-10-24T05:00:00+01:00" and tr[0]["location"] == "South Shields" and tr[0]["source_name"] == "Nexus Metro Updates"
+    assert tr[0]["date_time"] == "2026-10-19T16:40:00+01:00" and tr[0]["location"] == "South Shields" and tr[0]["source_name"] == "Nexus Metro Updates"
     # crime: Newcastle September only; Durham's August counts (captured before the window, durham_crime_all_captured)
     assert {r["month"] for r in keys[("crime", "newcastle")]} == {"2026-09"} and len(keys[("crime", "newcastle")]) == 4
     assert len(keys[("crime", "durham")]) == 5
@@ -166,7 +167,10 @@ def test_pool_eligibility_and_every_exclusion(tmp_path, store, dev):
 
 
 def test_pool_settings_switch_rules(tmp_path, store, dev):
-    _, rows, meta = _pool(tmp_path, store, dev, "--no-durham-crime-all-captured", "--no-street-manager")
+    _, rows, meta = _pool(tmp_path, store, dev, "--no-durham-crime-all-captured", "--no-street-manager", "--max-evidence-chars", "120")
+    assert rows and all(len(r["evidence_text"]) <= 120 for r in rows)
+    assert meta["counts"]["counts"]["too_long"]["transport/newcastle"] == 1          # dropped, not cut
+    assert meta["counts"]["counts"]["date_time_fallback"] == {}
     assert not [r for r in rows if (r["domain"], r["city"]) == ("crime", "durham")]   # August was not served in the window
     assert "street_manager" not in json.dumps(meta["counts"]["counts"]["street_manager"]) and meta["counts"]["counts"]["street_manager"] == {}
     assert meta["settings"]["durham_crime_all_captured"] is False
@@ -229,16 +233,23 @@ def test_template_check_reproduces_curb():
     assert all(r["result"] == "differs by design" for r in res["transport"])
 
 
-def test_transport_rendering_keeps_line_breaks_and_cuts_at_sentences():
-    parts = render.notice_lines(NOTICE.format(type="live-update", title="Delays at Monument", frm="2 Nov 2026, 07:00",
+def test_transport_rendering_keeps_line_breaks():
+    parts = render.notice_lines(NOTICE.format(type="live-update", title="Delays at Monument", frm="2 Nov 2026, 07:00", upd="2 Nov 2026, 07:05",
                                               body1="Trains are delayed", body2="Please allow extra time!"))
     assert parts["lines"] == ["Trains are delayed", "Please allow extra time!"]
     assert render.transport_text(parts) == "Delays at Monument. Effective from: 2 Nov 2026, 07:00. Trains are delayed. Please allow extra time!"
-    assert render.transport_text(parts, max_chars=60) == "Delays at Monument. Effective from: 2 Nov 2026, 07:00."
     assert render.page_time("2 Nov 2026, 07:00", 2026) == "2026-11-02T07:00:00+00:00"
-    assert render.geohash(54.7765, -1.5757).startswith("gcwzs")
 
 
 def test_out_dir_inside_google_drive_is_refused(tmp_path):
     with pytest.raises(SystemExit):
         heldout(["sample", "--out-dir", str(tmp_path / "Library" / "CloudStorage" / "x"), "--seed", "1"])
+
+
+def test_transport_date_time_is_last_updated_else_first_seen():
+    parts = {"title": "Lift out of service", "from": None, "until": None, "lines": ["Use the help point"]}
+    rec = {"structured": {"last_updated": "8 Oct 2026, 12:12"}, "first_seen": "2026-10-08T10:00:00Z", "fetched_at": "2026-10-08T10:00:00Z"}
+    row = render.transport(rec, parts)
+    assert (row["date_time"], row["date_time_fallback"]) == ("2026-10-08T12:12:00+01:00", False)
+    row = render.transport({**rec, "structured": {}}, parts)
+    assert (row["date_time"], row["date_time_fallback"]) == ("2026-10-08T11:00:00+01:00", True)    # first_seen, in UK time

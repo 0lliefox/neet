@@ -9,6 +9,7 @@ first captured inside the window, and then removed by the exclusions in this ord
   baseline      first seen only because coverage was widened (a new onenetwork tile's first capture)
   street_manager  onenetwork works whose works_ref has a Street Manager permit event before the window start
   not_renderable  CURB's formatter cannot render it (no road name or description, page HTML missing, ...)
+  too_long      rendered evidence longer than `max_evidence_chars` (off by default; dropped, never cut)
 
 Crime is per month: a Newcastle record is eligible only when its month was first captured inside the window;
 Durham months already captured are eligible (`durham_crime_all_captured`, Oliver 3 Nov, pending Ellis)."""
@@ -34,7 +35,7 @@ CURB_COLUMNS = ["item_id", "domain", "evidence_text", "source_name", "source_pag
 PROVENANCE = ["city", "record_id", "item_key", "capture_file", "first_seen", "valid_from", "valid_to"]
 STRATUM = ["model_run", "month", "works_ref", "notice_type"]
 POOL_COLUMNS = CURB_COLUMNS + PROVENANCE + STRATUM
-EXCLUSIONS = ("curb", "dev", "baseline", "street_manager", "not_renderable")
+EXCLUSIONS = ("curb", "dev", "baseline", "street_manager", "not_renderable", "too_long")
 SOURCES = ("onenetwork", "travel_updates", "metoffice_hourly", "police")
 ROADWORKS_PUB = {"Newcastle City Council": "newcastle", "Durham": "durham"}
 
@@ -45,8 +46,8 @@ class Settings:
     window_end: Optional[str] = None          # ISO UTC, exclusive; for mock windows
     durham_crime_all_captured: bool = True    # Oliver 3 Nov, pending Ellis
     street_manager: bool = True               # Oliver 3 Nov
-    durham_roadworks_url: str = "https://one.network/"   # OPEN: CURB has no Durham page
-    transport_max_chars: Optional[int] = None
+    durham_roadworks_url: str = "https://www.durham.gov.uk/roadworks"   # the council's roadworks page (loads, 3 Nov)
+    max_evidence_chars: Optional[int] = None  # drop longer items, never cut (Oliver 3 Nov); off until he picks a value
 
 
 def slice_of(rec: dict) -> Optional[tuple[str, str]]:
@@ -198,7 +199,8 @@ def build_pool(records_path: Path, root: Path, settings: Settings, curb_path: Pa
         refs = set().union(*(works_refs[k] for k in eligible if k in works_refs)) if eligible else set()
         sm_first = street_manager_first_events(root, refs, sm_report)
 
-    counts = {"in_scope": Counter(), "eligible": Counter(), **{e: Counter() for e in EXCLUSIONS}, "pool": Counter()}
+    counts = {"in_scope": Counter(), "eligible": Counter(), **{e: Counter() for e in EXCLUSIONS}, "pool": Counter(),
+              "date_time_fallback": Counter()}
     for stratum in in_scope.values():
         counts["in_scope"][stratum] += 1
     rows: list[dict] = []
@@ -215,7 +217,7 @@ def build_pool(records_path: Path, root: Path, settings: Settings, curb_path: Pa
         elif domain == "weather":
             row = render.weather(rec, city)
         else:
-            row = render.transport(rec, _page_parts(root, rec, page_cache), settings.transport_max_chars)
+            row = render.transport(rec, _page_parts(root, rec, page_cache))
         reason = None
         if row and (norm(row["evidence_text"]) in curb_text or (domain, row["date_time"], norm(row["location"])) in curb_keys):
             reason = "curb"
@@ -227,9 +229,13 @@ def build_pool(records_path: Path, root: Path, settings: Settings, curb_path: Pa
             reason = "street_manager"
         elif row is None:
             reason = "not_renderable"
+        elif settings.max_evidence_chars and len(row["evidence_text"]) > settings.max_evidence_chars:
+            reason = "too_long"
         if reason:
             counts[reason][stratum] += 1
             continue
+        if row.pop("date_time_fallback", False):
+            counts["date_time_fallback"][stratum] += 1
         s = rec["structured"]
         rows.append({**{c: "" for c in POOL_COLUMNS}, **row, "domain": domain, "city": city, "record_id": rec["record_id"],
                      "item_key": key, "capture_file": (rec.get("provenance") or {}).get("path") or "",
