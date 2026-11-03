@@ -76,7 +76,8 @@ def weather(rec: dict, city: str) -> Optional[dict[str, str]]:
         return None
     place = WEATHER_PLACE[city]
     url = METOFFICE_NEWCASTLE_URL if city == "newcastle" else MET_OFFICE_DURHAM_URL
-    return {"evidence_text": format_forecast_evidence(s, place), "source_name": SOURCE_NAMES[("weather", city)],
+    # the value the Met Office gives, with its true unit (Oliver, 3 Nov); CURB's v1 text said "mph" for m/s
+    return {"evidence_text": format_forecast_evidence(s, place, wind_unit="m/s"), "source_name": SOURCE_NAMES[("weather", city)],
             "source_page": f"{place} Hourly Forecast", "source_url": url, "date_time": str(s["time"]), "location": place}
 
 

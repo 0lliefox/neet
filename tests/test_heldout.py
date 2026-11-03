@@ -161,7 +161,7 @@ def test_pool_eligibility_and_every_exclusion(tmp_path, store, dev):
     # weather: two in-window runs x 4 steps per city, canonical place names
     w = keys[("weather", "newcastle")]
     assert len(w) == 8 and {r["model_run"] for r in w} == {"2026-10-20T08:00Z", "2026-10-20T09:00Z"}
-    assert w[0]["evidence_text"].startswith("Met Office forecast for Newcastle upon Tyne: Cloudy, 10.5°C, wind 3.2 mph")
+    assert w[0]["evidence_text"].startswith("Met Office forecast for Newcastle upon Tyne: Cloudy, 10.5°C, wind 3.2 m/s, 20% chance")
     assert keys[("weather", "durham")][0]["source_page"] == "Durham Hourly Forecast"
     assert all(r["item_key"] and r["first_seen"] >= START or r["domain"] == "crime" for r in rows)
 
@@ -228,8 +228,9 @@ def test_checker_rejects_a_broken_file(tmp_path):
 
 def test_template_check_reproduces_curb():
     res = template_checks(FX / "curb_sample.csv")
-    for domain in ("crime", "roadworks", "weather"):
+    for domain in ("crime", "roadworks"):
         assert [r["result"] for r in res[domain]] == ["identical"] * 5, res[domain]
+    assert [r["result"] for r in res["weather"]] == ["identical apart from the wind unit"] * 5, res["weather"]
     assert all(r["result"] == "differs by design" for r in res["transport"])
 
 
@@ -253,3 +254,10 @@ def test_transport_date_time_is_last_updated_else_first_seen():
     assert (row["date_time"], row["date_time_fallback"]) == ("2026-10-08T12:12:00+01:00", False)
     row = render.transport({**rec, "structured": {}}, parts)
     assert (row["date_time"], row["date_time_fallback"]) == ("2026-10-08T11:00:00+01:00", True)    # first_seen, in UK time
+
+
+def test_v1_weather_sentence_is_unchanged():
+    from scraper.scrapers.metoffice import format_forecast_evidence
+    step = {"time": "2026-04-13T11:00Z", "screenTemperature": 10.42, "windSpeed10m": 2.8, "probOfPrecipitation": 1, "significantWeatherCode": 1}
+    assert format_forecast_evidence(step) == ("Met Office forecast for Newcastle upon Tyne: Sunny day, 10.42°C, wind 2.8 mph, "
+                                              "1% chance of precipitation at 2026-04-13T11:00Z.")       # CURB weather_001

@@ -49,9 +49,9 @@ WX_CODES = {
 from scraper.base import BaseScraper, EvidenceItem
 
 
-def format_forecast_evidence(entry: dict, place: str = "Newcastle upon Tyne") -> str:
-    """The v1 (CURB) sentence for one DataHub hourly step. `windSpeed10m` is printed as given (the DataHub unit is
-    m/s) with the label "mph", as CURB's evidence has it."""
+def format_forecast_evidence(entry: dict, place: str = "Newcastle upon Tyne", wind_unit: str = "mph") -> str:
+    """The v1 (CURB) sentence for one DataHub hourly step. `windSpeed10m` is printed as given; the DataHub unit is
+    m/s, but v1 (and so CURB) labelled it "mph", which stays the default. The held-out set passes "m/s"."""
     time_str = entry.get("time", "")
     temp = entry.get("screenTemperature")
     wx_code = entry.get("significantWeatherCode")
@@ -64,7 +64,7 @@ def format_forecast_evidence(entry: dict, place: str = "Newcastle upon Tyne") ->
     if temp is not None:
         parts.append(f"{temp}°C")
     if wind_speed is not None:
-        parts.append(f"wind {wind_speed} mph")
+        parts.append(f"wind {wind_speed} {wind_unit}")
     if precip_prob is not None:
         parts.append(f"{precip_prob}% chance of precipitation")
     parts.append(f"at {time_str}.")

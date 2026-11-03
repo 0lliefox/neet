@@ -76,6 +76,10 @@ def template_checks(curb: Path, n: int = 5) -> dict[str, list[dict]]:
             mine = _from_curb(row)
             if mine is None:
                 res.append({"item": row["item_id"][:-2], "result": "CURB text did not parse", "detail": ""}); continue
+            if domain == "weather" and mine["evidence_text"].replace(" m/s, ", " mph, ") == row["evidence_text"]:
+                res.append({"item": row["item_id"][:-2], "result": "identical apart from the wind unit",
+                            "detail": "m/s (the DataHub's unit) where CURB says mph, by design"})
+                continue
             diffs = [f for f in FIELDS if mine[f] != row[f]]
             res.append({"item": row["item_id"][:-2], "result": "identical" if not diffs else "differs: " + ", ".join(diffs),
                         "detail": "; ".join(f"{f}: CURB {row[f]!r} vs NEET {mine[f]!r}" for f in diffs)})
@@ -253,9 +257,10 @@ Wording reuses the v1 (CURB) formatters with the city as a parameter (`scraper/s
   export keeps Police.uk's label verbatim ("On or near Haymarket") as the 20 Oct brief requires (confirmed 3 Nov:
   LaSSI v4.4's curated arm strips "on or near" ignoring case and compares names in lower case).
 - **Weather** (`format_forecast_evidence`): `Met Office forecast for {Place}: {condition}, {temp}°C, wind {wind}
-  mph, {pop}% chance of precipitation at {time}.` with canonical places "Newcastle upon Tyne" and "Durham". As in
-  CURB, `wind` is the DataHub's `windSpeed10m`, which is in m/s, printed with the label "mph". OPEN: keep CURB's
-  convention or convert (x 2.23694).
+  m/s, {pop}% chance of precipitation at {time}.` with canonical places "Newcastle upon Tyne" and "Durham". `wind`
+  is the DataHub's `windSpeed10m` as given, in its unit, m/s. CURB's v1 formatter printed the same value labelled
+  "mph"; the held-out set prints "m/s" (Oliver, 3 Nov: faithful to what the source provided). v1's own output is
+  unchanged.
 - **Transport** (differs from CURB by design, Oliver 22 Oct): the notice's heading, then its date span as the page
   shows it, then the body, each line break ending a sentence:
   `{heading}. Effective from: {from}. [Effective until: {until}.] {body line 1}. {body line 2}. ...`
