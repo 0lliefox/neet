@@ -9,6 +9,8 @@ first captured inside the window, and then removed by the exclusions in this ord
   baseline      first seen only because coverage was widened (a new onenetwork tile's first capture)
   street_manager  onenetwork works whose works_ref has a Street Manager permit event before the window start
   not_renderable  CURB's formatter cannot render it (no road name or description, page HTML missing, ...)
+  source_truncated  roadworks whose raw description is exactly at a source field limit (`source_limits`, 500: Street
+                Manager's description field) and does not end in . ! or ? -- cut at the source, dropped whole
   too_long      rendered evidence longer than `max_evidence_chars` (400; dropped whole, never cut)
 
 Crime is per month: a Newcastle record is eligible only when its month was first captured inside the window;
@@ -35,7 +37,7 @@ CURB_COLUMNS = ["item_id", "domain", "evidence_text", "source_name", "source_pag
 PROVENANCE = ["city", "record_id", "item_key", "capture_file", "first_seen", "valid_from", "valid_to"]
 STRATUM = ["model_run", "month", "works_ref", "notice_type"]
 POOL_COLUMNS = CURB_COLUMNS + PROVENANCE + STRATUM
-EXCLUSIONS = ("curb", "dev", "baseline", "street_manager", "not_renderable", "too_long")
+EXCLUSIONS = ("curb", "dev", "baseline", "street_manager", "not_renderable", "source_truncated", "too_long")
 SOURCES = ("onenetwork", "travel_updates", "metoffice_hourly", "police")
 ROADWORKS_PUB = {"Newcastle City Council": "newcastle", "Durham": "durham"}
 
@@ -50,6 +52,9 @@ class Settings:
     # drop longer items whole, never cut (Oliver 3 Nov): 400 is nearest the range LaSSI was developed on (CURB's
     # longest evidence is 309 characters); set by the LaSSI v4.4 session on Oliver's behalf, 3 Nov
     max_evidence_chars: Optional[int] = 400
+    # one.network description lengths at which the source cuts text: 500 is Street Manager's field limit (on 3 Nov the
+    # one distinct 500-character description ended mid-word); 255/256 was checked and is not a limit
+    source_limits: tuple[int, ...] = (500,)
 
 
 def slice_of(rec: dict) -> Optional[tuple[str, str]]:
@@ -251,6 +256,9 @@ def build_pool(records_path: Path, root: Path, settings: Settings, curb_path: Pa
             reason = "street_manager"
         elif row is None:
             reason = "not_renderable"
+        elif domain == "roadworks" and len(rec.get("text") or "") in settings.source_limits \
+                and (rec.get("text") or "").rstrip()[-1:] not in ".!?":
+            reason = "source_truncated"
         elif settings.max_evidence_chars and len(row["evidence_text"]) > settings.max_evidence_chars:
             reason = "too_long"
         if reason:

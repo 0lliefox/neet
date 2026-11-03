@@ -205,6 +205,15 @@ never cut. Oliver, 3 Nov: only evidence reasonable to parse as full sentences, a
 sentence; 400 was set by the LaSSI v4.4 session as nearest the range LaSSI was developed on, CURB's longest evidence
 being 309 characters. The value used is in the pool sidecar; `--max-evidence-chars 0` turns the rule off).
 
+`source_truncated` comes before it: a roadworks item whose raw one.network description is exactly 500 characters
+long (Street Manager's description field limit) and does not end in . ! or ? was cut at the source, so it is
+dropped whole (Oliver, 3 Nov: no evidence may contain a cut-off sentence). Checked on 3 Nov on the distinct
+descriptions captured before 2 Nov 16:00 UTC: the one 500-character description ends mid-word; at 255/256
+characters there are 3 distinct descriptions (2 end in punctuation, 1 at a word boundary, none mid-word), against
+109 at 230-250 characters (70% punctuation, 1% mid-word), so 255/256 is not a limit. (A count of 444 at 256 seen
+earlier counted every daily capture of one long-lived description.) Metro notices show no sign of source cuts: no
+ellipses, no fixed-length spike, and the bodies without final punctuation end in complete phrases.
+
 Nothing in the render path cuts text. The one slice in the reused v1 code, `evidence[:350]` in
 `RoadworksScraper._tile_feature_to_item` (v1's item builder), is not on the export's path: the export calls
 `format_tile_evidence`, which returns the whole sentence. v1's own output is unchanged.

@@ -290,3 +290,13 @@ def test_street_manager_names_from_a_truncated_archive(tmp_path):
     first = street_manager_first_events(root, {"NE0", "NE1", "NE2"}, rep)
     assert first == {"NE0": "2026-06-01T09:00:00Z", "NE1": "2026-06-02T09:00:00Z", "NE2": "2026-06-03T09:00:00Z"}
     assert rep["from_local_headers"] == ["000000_permit_2026_06.zip: 3 names"] or rep["from_local_headers"][0].endswith(": 3 names")
+
+
+def test_a_description_cut_at_the_500_character_source_limit_is_dropped(tmp_path, store, dev):
+    cut = ("Excavate in carriageway to locate and repair a leak on the water main " * 8)[:500]
+    whole = ("Excavate in carriageway to locate and repair a leak on the water main " * 8)[:499] + "."
+    assert cut[-1] != "." and len(cut) == len(whole) == 500
+    _put(store, "onenetwork", "2026-10-25T10:00:00Z", "tiles", {"features": [_works(21, "NE21", desc=cut), _works(22, "NE22", desc=whole)]})
+    _, rows, meta = _pool(tmp_path, store, dev, "--max-evidence-chars", "0")
+    assert meta["counts"]["counts"]["source_truncated"] == {"roadworks/newcastle": 1}
+    assert "NE22" in {r["works_ref"] for r in rows} and "NE21" not in {r["works_ref"] for r in rows}
