@@ -57,7 +57,8 @@ class Adapter:
 
     # -- helpers shared by adapters -------------------------------------------------
     def provenance(self, meta: dict[str, Any]) -> dict[str, Any]:
-        return {k: meta.get(k) for k in ("file", "sha256", "url", "tag", "source") if meta.get(k) is not None}
+        # `file` is the store's bare file name; `path` (set by build.iter_payloads) is relative to the data root
+        return {k: meta.get(k) for k in ("file", "path", "sha256", "url", "tag", "source") if meta.get(k) is not None}
 
     def fetched_at(self, meta: dict[str, Any]) -> Optional[str]:
         return iso_utc(meta.get("fetched_at"))

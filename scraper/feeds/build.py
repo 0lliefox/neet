@@ -51,12 +51,15 @@ def iter_payloads(root: Path, sources: Optional[set[str]] = None, since: Optiona
                     continue
                 meta.setdefault("source", src_dir.name)
                 meta.setdefault("file", str(payload.relative_to(root)))
+                meta["path"] = str(payload.relative_to(root))
                 yield payload, meta
 
 
 def build_records(root: Path, sources: Optional[set[str]] = None, since: Optional[str] = None, until: Optional[str] = None,
-                  errors: Optional[list] = None, lineage: Optional[dict] = None) -> list[EvidenceRecord]:
-    """`lineage`: per-source lineage options for `assign_lineage`, e.g. {"travel_updates": {"rule": "p5"}}."""
+                  errors: Optional[list] = None, lineage: Optional[dict] = None, before: Optional[str] = None) -> list[EvidenceRecord]:
+    """`lineage`: per-source lineage options for `assign_lineage`, e.g. {"travel_updates": {"rule": "p5"}}.
+    `before`: ISO UTC instant; captures fetched at or after it are ignored entirely (also for lineage), so a build
+    for a mock window cannot see later data."""
     reg = adapters()
     out: list[EvidenceRecord] = []
     by_uri: dict[str, EvidenceRecord] = {}
@@ -69,6 +72,8 @@ def build_records(root: Path, sources: Optional[set[str]] = None, since: Optiona
         status = meta.get("status")
         if status is not None and not (200 <= int(status) < 300):
             continue   # the store keeps error responses for the record; they are not evidence
+        if before and (adapter.fetched_at(meta) or "") >= before:
+            continue
         try:
             recs = adapter.records(read_payload(payload), meta)
         except Exception as e:  # one bad payload must not sink the build
